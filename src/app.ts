@@ -41,7 +41,7 @@ app.use('/api/v1/auth', authRoutes);
 
 
 
-app.post('*', async (req, res) => {
+app.get('*', async (req, res) => {
   res.json({ success: true, message: 'Route not found' });
 })
 
