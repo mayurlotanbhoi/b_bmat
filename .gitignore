@@ -27,3 +27,4 @@ firebase/serviceAccountKey.json
 *.sw?
 
 
+.vercel
