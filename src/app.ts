@@ -31,6 +31,7 @@ dotenv.config();
 //   credential: admin.credential.cert(serviceAccount),
 // });
 
+
 const serviceAccount = JSON.parse(process.env.FIREBASE_SERVICE_ACCOUNT_JSON!);
 
 admin.initializeApp({
