@@ -4,10 +4,11 @@ import connectToDb from "./db/index.js";
 const PORT = process.env.PORT || 5000;
 
 const startServer = async () => {
+    console.log("Starting server...");
     try {
         await connectToDb();
         app.listen(PORT, () => {
-         console.log(`✅ Server listening on http://localhost:${PORT}`);
+            console.log(`✅ Server listening on http://localhost:${PORT}`);
         });
     } catch (error) {
         console.error(`Failed to connect to MongoDB: ${(error as Error).message}`);

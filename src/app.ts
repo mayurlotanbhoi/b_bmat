@@ -3,7 +3,6 @@ import bodyParser from "body-parser";
 import dotenv from 'dotenv';
 import admin from "firebase-admin";
 import cors from 'cors'
-import notificationRoutes from './routes/notifications.js';
 // import serviceAccount from "./firebase/serviceAccountKey.json" with { type: "json" };
 import { errorHandler } from "./middleware/errorHandler.js";
 
@@ -44,18 +43,22 @@ process.on('unhandledRejection', (reason, promise) => {
 });
 
 import { router as authRoutes } from './routes/auth.routes.js';
+import notificationRoutes from './routes/notifications.js';
 
 
-app.use('/api/v1/', notificationRoutes);
+
+app.use('/api/v1/notifications', notificationRoutes);
 app.use('/api/v1/auth', authRoutes);
 
 
 
-app.get('*', async (req, res) => {
-  res.json({ success: true, message: 'Route not found' });
-})
+
 
 // Global error handler (keep it last)
 app.use(errorHandler);
+
+app.get('/', async (req, res) => {
+  res.json({ success: true, message: 'Route not found' });
+})
 
 export default app;
