@@ -41,7 +41,9 @@ app.use('/api/v1/auth', authRoutes);
 
 
 
-
+app.post('*', async (req, res) => {
+  res.json({ success: true, message: 'Route not found' });
+})
 
 // Global error handler (keep it last)
 app.use(errorHandler);
