@@ -3,6 +3,8 @@ import bodyParser from "body-parser";
 import dotenv from 'dotenv';
 import admin from "firebase-admin";
 import cors from 'cors'
+import path from 'path';
+import { fileURLToPath } from 'url';
 // import serviceAccount from "./firebase/serviceAccountKey.json" with { type: "json" };
 import { errorHandler } from "./middleware/errorHandler.js";
 
@@ -11,24 +13,20 @@ import { errorHandler } from "./middleware/errorHandler.js";
 
 const app = express();
 app.use(bodyParser.json());
-app.use(cors({ origin:['https://bmat.onrender.com', 'http://localhost:5173'], credentials: true }));
+app.use(bodyParser.urlencoded({ extended: true }));
+app.use(express.static('public'));
+app.use(express.json({ limit: '16kb', }));
+app.use(cors({ origin: ['https://bmat.onrender.com', 'http://localhost:5173'], credentials: true }));
 dotenv.config();
+app.use(cookieParser('yourSecretKey'));
 
 
+// __dirname equivalent in ESM
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
 
-
-
-// const serviceAccount = {
-//   projectId: process.env.FIREBASE_PROJECT_ID,
-//   clientEmail: process.env.FIREBASE_CLIENT_EMAIL,
-//   privateKey: process.env.FIREBASE_PRIVATE_KEY?.replace(/\\n/g, '\n'),
-// };
-
-// cosole.log("serviceAccount", serviceAccount)
-
-// admin.initializeApp({
-//   credential: admin.credential.cert(serviceAccount),
-// });
+// Serve static files from /public
+app.use('public', express.static(path.join(__dirname, '../uploads')));
 
 
 const serviceAccount = JSON.parse(process.env.FIREBASE_SERVICE_ACCOUNT_JSON!);
@@ -36,6 +34,7 @@ const serviceAccount = JSON.parse(process.env.FIREBASE_SERVICE_ACCOUNT_JSON!);
 admin.initializeApp({
   credential: admin.credential.cert(serviceAccount),
 });
+
 process.on('unhandledRejection', (reason, promise) => {
   console.error('Unhandled Rejection at:', promise, 'reason:', reason);
   // Optional: shut down server gracefully
@@ -44,10 +43,13 @@ process.on('unhandledRejection', (reason, promise) => {
 
 import { router as authRoutes } from './routes/auth.routes.js';
 import notificationRoutes from './routes/notifications.js';
+import matrimony from "./routes/matrimony.routes.js";
+import cookieParser from "cookie-parser";
 
 
 
 app.use('/api/v1/notifications', notificationRoutes);
+app.use('/api/v1/matrimony', matrimony);
 app.use('/api/v1/auth', authRoutes);
 
 

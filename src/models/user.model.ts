@@ -1,78 +1,199 @@
-import mongoose, { Document, Schema, Model } from 'mongoose';
+import mongoose, { Document, Schema, Model, Types, ObjectId } from 'mongoose';
 import bcrypt from 'bcryptjs';
 
-// Define the IUser interface, which represents the document schema
-interface IUser extends Document {
-  _id: string;
+// =======================
+// Interface: IUser
+// =======================
+export interface IUser extends Document {
+  _id: Types.ObjectId;
+  uid: string;
+
+  name: string;
+  location?: string | null;
+  language?: string;
+
+  coordinates?: {
+    latitude: number;
+    longitude: number;
+  } | null;
+
+  profilePicture?: string | null;
   email: string;
   password: string;
-  uid: string;
+  mobile: string | null;
+
+  loginMethodHistory?: {
+    method: 'google' | 'phone' | 'password';
+    timestamp: Date;
+  }[];
+
+  isActive: 'active' | 'inactive' | 'banned';
+  bannedReason?: string | null;
+
+  paymentHistory?: Types.ObjectId[];
+
+  refreshToken?: string | null;
+  fcmTokens?: string[];
+
+  userRole: 'admin' | 'user';
+
+  organizationId?: Types.ObjectId | null;
+  referredBy?: Types.ObjectId | null;
+  matrimonyId?: Types.ObjectId | null;
+  createdAt?: Date;
+  updatedAt?: Date;
+
   comparePassword(password: string): Promise<boolean>;
 }
 
-// Define the IUserModel interface which includes the static methods
+// =======================
+// Interface: IUserModel (Static Methods)
+// =======================
 interface IUserModel extends Model<IUser> {
   findUserByEmail(email: string): Promise<IUser | null>;
-  createUser(email: string, password: string): Promise<IUser>;
+  createUserWithPhone(phone: string, password: string,): Promise<IUser>;
+  createUserWithGoogle(email: string, name: string, profilePicture?: string): Promise<IUser>;
   validatePassword(storedPassword: string, inputPassword: string): Promise<boolean>;
+  updateRefreshToken(userId: any, refreshToken: string): Promise<IUser>;
+  updateFcmTokens(userId: any, fcmTokens: string): Promise<IUser>;
 }
 
-// Define the schema for the user
-const userSchema = new Schema<IUser>({
-  email: {
-    type: String,
-    required: true,
-    unique: true,
-    lowercase: true,
-  },
-  password: {
-    type: String,
-    required: true,
-  },
-  uid: {
-    type: String,
-    unique: true,
-    required: true,
-  },
-});
+// =======================
+// Schema: userSchema
+// =======================
+const userSchema = new Schema<IUser>(
+  {
+    name: { type: String, required: true, trim: true },
+    location: { type: String, default: null, trim: true },
+    language: { type: String, default: 'en' },
 
-// Hash the password before saving to the database
+    coordinates: {
+      type: {
+        latitude: { type: Number },
+        longitude: { type: Number },
+      },
+      default: null,
+    },
+
+
+    profilePicture: { type: String, default: null, trim: true },
+
+    email: { type: String, default: null, lowercase: true, trim: true },
+    password: { type: String, },
+    mobile: { type: String, default: null },
+
+    loginMethodHistory: [
+      {
+        method: { type: String, enum: ['google', 'phone',], default: 'google' },
+        timestamp: Date,
+      },
+    ],
+
+    isActive: {
+      type: String,
+      enum: ['active', 'inactive', 'banned'],
+      default: 'active',
+    },
+    bannedReason: { type: String, default: null },
+    paymentHistory: [{ type: Schema.Types.ObjectId, ref: 'Payment' }],
+    refreshToken: { type: String, default: null },
+    fcmTokens: { type: [String], default: [] },
+    userRole: { type: String, enum: ['admin', 'user'], default: 'user' },
+    organizationId: { type: Schema.Types.ObjectId, ref: 'Organization', default: null },
+    matrimonyId: { type: Schema.Types.ObjectId, ref: 'Matrimony', default: null },
+    referredBy: { type: Schema.Types.ObjectId, ref: 'User', default: null },
+  },
+  { timestamps: true }
+);
+
+// =======================
+// Middleware: Password Hash
+// =======================
 userSchema.pre<IUser>('save', async function (next) {
   if (this.isModified('password')) {
-    const hashedPassword = await bcrypt.hash(this.password, 10);
-    this.password = hashedPassword;
+    const hashed = await bcrypt.hash(this.password, 10);
+    this.password = hashed;
   }
   next();
 });
 
-// Instance method to compare passwords
+// =======================
+// Instance Method
+// =======================
 userSchema.methods.comparePassword = async function (password: string): Promise<boolean> {
   return bcrypt.compare(password, this.password);
 };
 
-// Static method for finding a user by email
-userSchema.statics.findUserByEmail = async function (email: string) {
-  return await this.findOne({ email });
+userSchema.statics.updateFcmTokens = async function (userId: any, fcmTokens: string) {
+  return await this.findByIdAndUpdate(
+    userId,
+    { fcmTokens },
+    { new: true }
+  );
 };
 
-// Static method for creating a new user
-userSchema.statics.createUser = async function (email: string, password: string){
-  const user = new this({
-    email,
-    password,
-    uid: new mongoose.Types.ObjectId().toString(),
-  });
+userSchema.statics.updateRefreshToken = async function (
+  userId: string,
+  refreshToken: string
+) {
+  return await this.findByIdAndUpdate(
+    userId,
+    { $set: { refreshToken } }, // avoids duplicates
+    { new: true }
+  ).select('name userRole mobile email profilePicture language');
+};
+
+// =======================
+// Static Methods
+// =======================
+userSchema.statics.findUserByEmail = async function (email: string) {
+  return this.findOne({ email });
+};
+
+userSchema.statics.getAllfcmTokens = async function () {
+  return this.findOne().select('fcmTokens');
+}
+
+
+
+// userSchema.statics.createUser = async function (phone: string, password: string, profilePicture?: string) {
+//   const user = new this({
+//     phone,
+//     password,
+//     profilePicture
+//   });
+//   await user.save();
+//   return user;
+// };
+
+userSchema.statics.createUserWithPhone = async function (
+  mobile: string,
+  password: string,
+) {
+  const user = new this({ mobile, password, loginMethodHistory: [{ method: 'phone', timestamp: new Date() }], });
   await user.save();
   return user;
 };
 
-// Static method for validating a user's password
+userSchema.statics.createUserWithGoogle = async function (
+  email: string,
+  name: string,
+  profilePicture?: string
+) {
+  const user = new this({ email, name, profilePicture, loginMethodHistory: [{ method: 'google', timestamp: new Date() }], });
+  await user.save();
+  return user;
+};
+
 userSchema.statics.validatePassword = async function (storedPassword: string, inputPassword: string) {
   return bcrypt.compare(inputPassword, storedPassword);
 };
 
-// Create the model
+// =======================
+// Model Export
+// =======================
 const UserModel = mongoose.model<IUser, IUserModel>('User', userSchema);
 
 export { UserModel };
-export type { IUser };
+// export type { IUser };
+export default UserModel;

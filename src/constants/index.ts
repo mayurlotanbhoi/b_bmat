@@ -1,1 +1,2 @@
-export const DB_NAME = 'bmat'
+export * from "./comman.js"
+export * from "./regexPatterns.js"

@@ -1,22 +1,44 @@
 // /src/middleware/authMiddleware.ts
 import { Request, Response, NextFunction } from 'express';
-import * as jwt from 'jsonwebtoken';
+import jwt from 'jsonwebtoken';
+import { ApiError } from './ApiError.js';
+import UserModel from '../models/user.model.js';
 
-const authMiddleware = (req: Request, res: Response, next: NextFunction) => {
-  const refreshToken = req.cookies[process.env.COOKIE_NAME!];
+export interface AuthenticatedRequest extends Request {
+  loginUser?: any; // Optionally replace 'any' with your user type
+}
 
-  if (!refreshToken) {
-    return res.status(403).json({ message: 'No token provided' });
-  }
-
-  jwt.verify(refreshToken, process.env.JWT_REFRESH_SECRET!, (error:any, decoded:any) => {
-    if (error) {
-      return res.status(401).json({ message: 'Unauthorized' });
+const authMiddleware = async (
+  req: AuthenticatedRequest,
+  _res: Response,
+  next: NextFunction
+) => {
+  try {
+    const token =
+      req.cookies?.[process.env.COOKIE_NAME!] || // get token from cookie
+      req.headers?.authorization?.split(' ')[1];
+    console.log(process.env.COOKIE_NAME, token);
+    if (!token) {
+      throw new ApiError(401, 'Authentication token not found in cookies');
     }
 
-    req.user = decoded as { userId: string }; // Attach user info to request object
+    // Verify token
+    const decoded = jwt.verify(token, process.env.JWT_SECRET!) as { userId: string };
+
+    console.log(decoded);
+
+    const user = await UserModel.findById(decoded.userId).select('-password');
+    console.log(user);
+    if (!user) {
+      throw new ApiError(401, 'User not found from token');
+    }
+
+    req.loginUser = user;
     next();
-  });
+  } catch (error) {
+    console.error('Authentication Error:', error);
+    next(new ApiError(401, 'Invalid or expired token'));
+  }
 };
 
 export { authMiddleware };
