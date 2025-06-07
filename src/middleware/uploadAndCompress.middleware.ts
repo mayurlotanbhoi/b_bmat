@@ -46,12 +46,12 @@ const upload = multer({
     { name: 'verificationImage', maxCount: 1 }
 ]);
 
-export const convertFilePathToPublicUrl = (filePath: string): string => {
+export const convertFilePathToPublicUrl = (filePath: string, domain: string): string => {
     const normalized = filePath.replace(/\\/g, '/');
     const idx = normalized.indexOf('/uploads/');
     if (idx === -1) return '';
 
-    return `/uploads${normalized.substring(idx + '/uploads'.length)}`;
+    return `${domain}/uploads${normalized.substring(idx + '/uploads'.length)}`;
 };
 
 
@@ -82,7 +82,7 @@ export const uploadAndCompressImages = (req: Request, res: Response, next: NextF
 
                 compressedImages.push({
                     originalName: file.originalname,
-                    fileName: compressedFileName,
+                    fileName: convertFilePathToPublicUrl(compressedPath, process.env.DOMAIN_NAME || 'default-domain.com'),
                     path: compressedPath,
                 });
             }
@@ -104,7 +104,7 @@ export const uploadAndCompressImages = (req: Request, res: Response, next: NextF
 
                 compressedVerificationImage = {
                     originalName: vFile.originalname,
-                    fileName: convertFilePathToPublicUrl(compressedPath), // or compressedFileName,
+                    fileName: convertFilePathToPublicUrl(compressedPath, process.env.DOMAIN_NAME || 'default-domain.com'), // or compressedFileName,
                     path: compressedPath,
                 };
             }

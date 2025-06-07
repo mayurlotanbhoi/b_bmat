@@ -7,6 +7,7 @@ import { OAuth2Client, TokenPayload } from 'google-auth-library'; // Import Goog
 import { ApiResponse } from '../middleware/ApiResponse.js'; // Assuming this is in your middleware folder
 import { UserModel } from '../models/user.model.js'; // Make sure this path is correct
 import { ApiError } from '../middleware/ApiError.js';
+import { asyncHandler } from '../middleware/asyncHandler.js';
 
 dotenv.config();
 
@@ -58,7 +59,7 @@ const googleLogin = async (req: Request, res: Response) => {
     const refreshToken = generateToken(userId, process.env.JWT_REFRESH_SECRET!, process.env.JWT_REFRESH_EXPIRATION!);
 
 
-    user = await UserModel.updateRefreshToken(userId, refreshToken);
+    user = await UserModel.updateRefreshAndAccessToken(userId, refreshToken, accessToken);
 
     res.cookie(process.env.COOKIE_NAME!, accessToken, {
       httpOnly: true,
@@ -81,6 +82,20 @@ const googleLogin = async (req: Request, res: Response) => {
     res.status(500).json(new ApiResponse(500, null, 'Google login failed'));
   }
 };
+
+const regresToken = asyncHandler(async (req: Request, res: Response) => {
+  const refreshToken = req.cookies[process.env.COOKIE_NAME!];
+  const userId = await verify(refreshToken, process.env.JWT_REFRESH_SECRET!);
+  const accessToken = generateToken(userId, process.env.JWT_SECRET!, process.env.JWT_ACCESS_EXPIRATION!);
+  res.cookie(process.env.COOKIE_NAME!, accessToken, {
+    httpOnly: true,
+    secure: process.env.NODE_ENV === 'production', // must be true on HTTPS
+    sameSite: 'lax', // <--- REQUIRED for cross-site cookie sending
+    maxAge: Number(process.env.COOKIE_MAX_AGE),
+    path: process.env.COOKIE_PATH!,
+  });
+  res.status(200).json(new ApiResponse(200, {}));
+})
 
 // User Registration (email + password)
 const register = async (req: Request, res: Response) => {

@@ -79,21 +79,21 @@ export interface IProfile extends Document {
 
     expectation?: {
         ageRange?: string;
-        heightRange?: string;
+        heightRange?: string[];
         religion?: string;
+        incomeRange?: string[];
         caste?: string;
         subCaste?: string;
-        education?: string;
-        occupation?: string;
+        education?: string[];
+        occupation?: string[];
         locationPreference?: string;
     };
 
-    documents?: {
-        govermentId?: string;
-    };
+
+    verificationImage?: string;
+    profilePhotos: string[];
 
     isVerified: boolean;
-    profilePicture: string[];
     profileStatus: 'Active' | 'Inactive' | 'Suspended';
     organization: string;
     organizationId: Types.ObjectId;

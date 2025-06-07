@@ -109,20 +109,28 @@ const profileSchema = new Schema<IProfile>({
         ageRange: { type: String, default: 'NA' },
         heightRange: { type: String, default: 'NA' },
         religion: { type: String, default: 'NA' },
+        income: { type: String, default: 'NA' },
         caste: { type: String, default: 'NA' },
         subCaste: { type: String, default: 'NA' },
-        education: { type: String, default: 'NA' },
-        occupation: { type: String, default: 'NA' },
+        education: { type: [String], default: 'NA' },
+        occupation: { type: [String], default: 'NA' },
         locationPreference: { type: String, default: 'NA' }
     },
 
-    documents: {
-        govermentId: String,
+    verificationImage: {
+        type: String,
+        required: false
     },
-    profilePicture: {
+    profilePhotos: {
         type: [String],
-        default: [],
+        validate: {
+            validator: function (arr: string) {
+                return Array.isArray(arr) && typeof arr[0] === 'string' && arr[0].trim() !== '';
+            },
+            message: 'At least one profile photo is required (profilePhotos[0])',
+        },
     },
+
 
     isVerified: { type: Boolean, default: false },
     profileStatus: {
@@ -187,7 +195,6 @@ profileSchema.statics.findUserByOrganizationId = async function (organizationId:
 
 
 profileSchema.statics.createMatrimonyProfile = async function (matProfile) {
-
     const newMAt = new this(matProfile)
     await newMAt.save();
     return newMAt;

@@ -33,6 +33,7 @@ export interface IUser extends Document {
   paymentHistory?: Types.ObjectId[];
 
   refreshToken?: string | null;
+  accessToken?: string | null;
   fcmTokens?: string[];
 
   userRole: 'admin' | 'user';
@@ -54,7 +55,7 @@ interface IUserModel extends Model<IUser> {
   createUserWithPhone(phone: string, password: string,): Promise<IUser>;
   createUserWithGoogle(email: string, name: string, profilePicture?: string): Promise<IUser>;
   validatePassword(storedPassword: string, inputPassword: string): Promise<boolean>;
-  updateRefreshToken(userId: any, refreshToken: string): Promise<IUser>;
+  updateRefreshAndAccessToken(userId: any, refreshToken: string, accessToken: string): Promise<IUser>;
   updateFcmTokens(userId: any, fcmTokens: string): Promise<IUser>;
 }
 
@@ -97,6 +98,7 @@ const userSchema = new Schema<IUser>(
     bannedReason: { type: String, default: null },
     paymentHistory: [{ type: Schema.Types.ObjectId, ref: 'Payment' }],
     refreshToken: { type: String, default: null },
+    accessToken: { type: String, default: null },
     fcmTokens: { type: [String], default: [] },
     userRole: { type: String, enum: ['admin', 'user'], default: 'user' },
     organizationId: { type: Schema.Types.ObjectId, ref: 'Organization', default: null },
@@ -132,13 +134,14 @@ userSchema.statics.updateFcmTokens = async function (userId: any, fcmTokens: str
   );
 };
 
-userSchema.statics.updateRefreshToken = async function (
+userSchema.statics.updateRefreshAndAccessToken = async function (
   userId: string,
-  refreshToken: string
+  refreshToken: string,
+  accessToken: string
 ) {
   return await this.findByIdAndUpdate(
     userId,
-    { $set: { refreshToken } }, // avoids duplicates
+    { $set: { refreshToken, accessToken } }, // avoids duplicates
     { new: true }
   ).select('name userRole mobile email profilePicture language');
 };

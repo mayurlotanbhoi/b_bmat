@@ -1,10 +1,12 @@
-import yup from "yup"
+import yup, { AnySchema } from "yup"
 import {
     mobileRegex,
     pinCodeRegex,
     nameRegex,
     emailRegex,
 } from "../constants/regexPatterns.js";
+import { ValidationError } from "yup";
+import { ApiError } from "../middleware/ApiError.js";
 
 const addressSchema = yup.object({
     // addressLine: yup.string().required("Address Line is required"),
@@ -106,23 +108,54 @@ const profileValidationSchema = yup.object({
     expectation: yup.object({
         ageRange: yup.string().nullable(),
         heightRange: yup.string().nullable(),
+        income: yup.string().nullable(),
         religion: yup.string().nullable(),
         caste: yup.string().nullable(),
         subCaste: yup.string().nullable(),
-        education: yup.string().nullable(),
-        occupation: yup.string().nullable(),
+        education: yup.array().nullable(),
+        occupation: yup.array().nullable(),
         locationPreference: yup.string().nullable(),
     }),
 
-    documents: yup.object({
-        govermentId: yup.string().url("Government ID must be a valid URL").nullable(),
-    }),
-
     isVerified: yup.boolean().default(false),
-    profilePicture: yup
+    verificationImage: yup
+        .string()
+        .nullable()
+        .test("is-valid-url", "Government ID must be a valid URL", (value) => {
+            if (!value) return true; // allow null
+            try {
+                const url = new URL(value);
+                return true;
+            } catch {
+                return false;
+            }
+        }),
+
+    profilePhotos: yup
         .array()
-        .of(yup.string().url("Profile picture must be a valid URL"))
-        .nullable(),
+        .of(
+            yup
+                .string()
+                .test("is-valid-url", "Profile picture must be a valid URL", (value) => {
+                    if (!value) return false;
+                    try {
+                        new URL(value);
+                        return true;
+                    } catch {
+                        return false;
+                    }
+                })
+        )
+        .test(
+            "at-least-one",
+            "At least one profile picture is required",
+            (value) => {
+                if (value === null) return false;
+                return Array.isArray(value) && typeof value[0] === "string" && value[0].trim() !== "";
+            }
+        )
+        .required("Profile picture is required"),
+
 
     profileStatus: yup
         .string()
@@ -141,5 +174,64 @@ const profileValidationSchema = yup.object({
         lastUpdated: yup.date().nullable(),
     }),
 });
+
+
+
+interface ValidationFieldError {
+    field: string;
+    message: string;
+}
+
+/**
+ * Validates only the fields present in the payload using the full Yup schema.
+ * Throws ApiError if any validation fails.
+ */
+export const validatePartialProfile = async (
+    partialData: Record<string, any>
+): Promise<boolean> => {
+    const errors: ValidationFieldError[] = [];
+
+    const validateField = async (path: string, value: any) => {
+        try {
+            const fieldSchema = yup.reach(profileValidationSchema, path);
+            if (typeof (fieldSchema as AnySchema).validate === "function") {
+                await (fieldSchema as AnySchema).validate(value);
+            }
+        } catch (err) {
+            if (err instanceof ValidationError) {
+                errors.push({
+                    field: path,
+                    message: err.message,
+                });
+            }
+        }
+    };
+
+    const traverse = async (data: any, prefix = ""): Promise<void> => {
+        for (const key of Object.keys(data)) {
+            const value = data[key];
+            const currentPath = prefix ? `${prefix}.${key}` : key;
+
+            if (
+                value !== null &&
+                typeof value === "object" &&
+                !(value instanceof Date) &&
+                !(value instanceof File)
+            ) {
+                await traverse(value, currentPath);
+            } else {
+                await validateField(currentPath, value);
+            }
+        }
+    };
+
+    await traverse(partialData);
+
+    if (errors.length > 0) {
+        throw new ApiError(400, "Validation failed", errors as any);
+    }
+
+    return true;
+};
 
 export { profileValidationSchema };
