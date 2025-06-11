@@ -2,7 +2,7 @@ class ApiError extends Error {
   public statusCode: number;
   public success: boolean;
   public errors: Array<{ field?: string; message: string }>;
-  
+
   constructor(
     statusCode: number,
     message: string = "Something is Wrong",

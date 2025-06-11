@@ -25,10 +25,10 @@ const authMiddleware = async (
     // Verify token
     const decoded = jwt.verify(token, process.env.JWT_SECRET!) as { userId: string };
 
-    console.log(decoded);
+    // console.log(decoded);
 
     const user = await UserModel.findById(decoded.userId).select('-password');
-    console.log(user);
+    // console.log(user);
     if (!user) {
       throw new ApiError(401, 'User not found from token');
     }

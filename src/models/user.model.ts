@@ -64,7 +64,7 @@ interface IUserModel extends Model<IUser> {
 // =======================
 const userSchema = new Schema<IUser>(
   {
-    name: { type: String, required: true, trim: true },
+    name: { type: String, trim: true },
     location: { type: String, default: null, trim: true },
     language: { type: String, default: 'en' },
 

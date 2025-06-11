@@ -8,6 +8,7 @@ import { ApiResponse } from '../middleware/ApiResponse.js'; // Assuming this is 
 import { UserModel } from '../models/user.model.js'; // Make sure this path is correct
 import { ApiError } from '../middleware/ApiError.js';
 import { asyncHandler } from '../middleware/asyncHandler.js';
+import bcrypt from 'bcryptjs';
 
 dotenv.config();
 
@@ -83,10 +84,108 @@ const googleLogin = async (req: Request, res: Response) => {
   }
 };
 
-const regresToken = asyncHandler(async (req: Request, res: Response) => {
-  const refreshToken = req.cookies[process.env.COOKIE_NAME!];
-  const userId = await verify(refreshToken, process.env.JWT_REFRESH_SECRET!);
+const refreshToken = async (req: Request, res: Response) => {
+  const tokenFromCookie = req.cookies?.[process.env.COOKIE_NAME!];
+  const tokenFromHeader = req.headers?.authorization?.split(' ')[1];
+  const accessToken = tokenFromCookie || tokenFromHeader;
+
+  try {
+    if (!accessToken) {
+      throw new ApiError(401, 'Access token not found');
+    }
+
+    // Find user by access token
+    const user = await UserModel.findOne({ accessToken }).select('name userRole mobile email profilePicture language accessToken refreshToken');
+
+    if (!user || !user.refreshToken) {
+      throw new ApiError(403, 'Refresh token not found');
+    }
+
+
+    // Verify the refresh token
+    const decoded = verify(user.refreshToken, process.env.JWT_REFRESH_SECRET!) as { userId: string };
+
+    console.log(' refresed token decoded', decoded);
+
+    // Generate new access token
+    const newAccessToken = generateToken(decoded.userId, process.env.JWT_SECRET!, process.env.JWT_ACCESS_EXPIRATION!);
+
+    // Set new access token in cookie
+    res.cookie(process.env.COOKIE_NAME!, newAccessToken, {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === 'production',
+      sameSite: 'lax',
+      maxAge: Number(process.env.COOKIE_MAX_AGE),
+      path: process.env.COOKIE_PATH!,
+    });
+
+    res.status(200).json(new ApiResponse(200, { user, accessToken: newAccessToken }, 'refresed token'));
+    // res.status(200).json(new ApiResponse(200, { accessToken: newAccessToken }));
+  } catch (err) {
+    throw new ApiError(401, 'Invalid or expired refresh token');
+  }
+}
+
+// User Registration (email + password)
+const register = async (req: Request, res: Response) => {
+
+  const { mobile, password } = req.body as { mobile?: string; password?: string };
+
+  // Validate input
+  if (!mobile?.trim() || !password?.trim()) {
+    return res.status(400).json(
+      new ApiResponse(400, null, 'Mobile and password are required')
+    );
+  }
+
+  // Check if user already exists
+  const existingUser = await UserModel.findUserByEmail(mobile);
+  if (existingUser) {
+    return res.status(409).json(
+      new ApiResponse(409, null, 'User already exists')
+    );
+  }
+
+  // Optional: Hash the password before saving
+
+
+  // Create and save new user
+  const newUser = await UserModel.createUserWithPhone(mobile, password);
+
+  return res.status(201).json(
+    new ApiResponse(201, newUser, 'User registered successfully')
+  );
+
+};
+
+// User Login (email + password)
+const login = async (req: Request, res: Response) => {
+  const { mobile, password } = req.body;
+  console.log(mobile, password);
+
+
+  // Ensure that you have a findUserByEmail method in UserModel
+  const user = await UserModel.findOne({ mobile });
+  if (!user) {
+    throw new ApiError(404, 'User not found');
+  }
+
+  console.log("user", user?.password, password);
+
+  // Ensure that you have a validatePassword method in UserModel
+  const passwordIsValid = await UserModel.validatePassword(user.password, password);
+  console.log(passwordIsValid, 'passwordIsValid');
+  if (!passwordIsValid) {
+    throw new ApiError(404, 'Invalid Credentials');
+  }
+
+  const userId = user._id;
   const accessToken = generateToken(userId, process.env.JWT_SECRET!, process.env.JWT_ACCESS_EXPIRATION!);
+  const refreshToken = generateToken(userId, process.env.JWT_REFRESH_SECRET!, process.env.JWT_REFRESH_EXPIRATION!);
+
+
+  const newUser = await UserModel.updateRefreshAndAccessToken(userId, refreshToken, accessToken);
+
   res.cookie(process.env.COOKIE_NAME!, accessToken, {
     httpOnly: true,
     secure: process.env.NODE_ENV === 'production', // must be true on HTTPS
@@ -94,63 +193,11 @@ const regresToken = asyncHandler(async (req: Request, res: Response) => {
     maxAge: Number(process.env.COOKIE_MAX_AGE),
     path: process.env.COOKIE_PATH!,
   });
-  res.status(200).json(new ApiResponse(200, {}));
-})
-
-// User Registration (email + password)
-const register = async (req: Request, res: Response) => {
-  const { email, password } = req.body;
-
-  if (!email || !password) {
-    return res.status(400).send(new ApiResponse(400, null, 'Email and password are required'));
-  }
-
-  try {
-    // Ensure that you have a createUser method in the UserModel
-    const user = await UserModel.createUserWithPhone(email, password);
-    console.log(user);
-    // If `user` is an array, extract the first element
-    // const newUser = user[0]; 
-    res.status(201).json(new ApiResponse(201, { userId: user?._id }, 'User registered successfully'));
-  } catch (error) {
-    console.error('Registration error:', error);
-    res.status(500).json(new ApiResponse(500, null, 'Registration failed'));
-  }
-};
-
-// User Login (email + password)
-const login = async (req: Request, res: Response) => {
-  const { email, password } = req.body;
-
-  try {
-    // Ensure that you have a findUserByEmail method in UserModel
-    const user = await UserModel.findUserByEmail(email);
-    if (!user) {
-      throw new ApiError(404, 'User not found');
-    }
-
-    // Ensure that you have a validatePassword method in UserModel
-    const passwordIsValid = await UserModel.validatePassword(user.password, password);
-    if (!passwordIsValid) {
-      throw new ApiError(401, 'Invalid Credentials');
-
-    }
-
-    const accessToken = generateToken(user._id, process.env.JWT_SECRET!, process.env.JWT_ACCESS_EXPIRATION!);
-    const refreshToken = generateToken(user._id, process.env.JWT_REFRESH_SECRET!, process.env.JWT_REFRESH_EXPIRATION!);
-
-    res.cookie(process.env.COOKIE_NAME!, refreshToken, {
-      httpOnly: true,
-      maxAge: Number(process.env.COOKIE_MAX_AGE),
-      path: process.env.COOKIE_PATH!,
-    });
 
 
-    res.status(200).json(new ApiResponse(200, { accessToken, refreshToken }, 'Login successful'));
-  } catch (error) {
-    console.error('Login error:', error);
-    throw new ApiError(401, 'Login failed');
-  }
+
+  res.status(200).json(new ApiResponse(200, { user: newUser, accessToken }, 'Login successful'));
+
 };
 
 // Logout
@@ -159,4 +206,4 @@ const logout = async (req: Request, res: Response) => {
   res.status(200).json(new ApiResponse(200, null, 'Logout successful'));
 };
 
-export { googleLogin, register, login, logout };
+export { googleLogin, refreshToken, register, login, logout };
