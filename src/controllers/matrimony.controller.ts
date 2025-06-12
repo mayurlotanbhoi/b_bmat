@@ -58,37 +58,53 @@ export const getProfileById = asyncHandler(async (req: Request, res: Response) =
 
 export const searchProfiles = asyncHandler(async (req: Request, res: Response) => {
     const { query } = req.query;
-    console.log('query', query);
 
     if (!query || typeof query !== 'string') {
         throw new ApiError(400, 'Search query is required');
     }
 
-    const regexQuery = new RegExp(query, 'i'); // case-insensitive search
-
+    const regexQuery = new RegExp(query, 'i');
     const isValidObjectId = Types.ObjectId.isValid(query);
 
-    const results = await matrimonyProfileModel.find({
-        $or: [
-            { 'personalDetails.fullName': regexQuery },
-            { 'contactDetails.mobileNo': regexQuery },
-            { 'contactDetails.whatsappNo': regexQuery },
-            { 'contactDetails.email': regexQuery },
-            { 'familyDetails.fatherName': regexQuery },
-            { 'familyDetails.motherName': regexQuery },
-            { 'religiousDetails.religion': regexQuery },
-            { 'religiousDetails.caste': regexQuery },
-            { 'religiousDetails.subCaste': regexQuery },
-            { 'educationDetails.highestQualification': regexQuery },
-            { 'professionalDetails.occupation': regexQuery },
-            { 'professionalDetails.companyName': regexQuery },
-            { 'professionalDetails.workingCity': regexQuery },
-            { 'contactDetails.presentAddress.city': regexQuery },
-            { 'contactDetails.presentAddress.area': regexQuery },
-            { 'userId': isValidObjectId ? new Types.ObjectId(query) : undefined },
-            { '_id': isValidObjectId ? new Types.ObjectId(query) : undefined },
-        ].filter(Boolean), // removes any undefined conditions
-    }).limit(20);
+    const matchConditions = [
+        { 'personalDetails.fullName': regexQuery },
+        { 'contactDetails.mobileNo': regexQuery },
+        { 'contactDetails.whatsappNo': regexQuery },
+        { 'contactDetails.email': regexQuery },
+        { 'familyDetails.fatherName': regexQuery },
+        { 'familyDetails.motherName': regexQuery },
+        { 'religiousDetails.religion': regexQuery },
+        { 'religiousDetails.caste': regexQuery },
+        { 'religiousDetails.subCaste': regexQuery },
+        { 'educationDetails.highestQualification': regexQuery },
+        { 'professionalDetails.occupation': regexQuery },
+        { 'professionalDetails.companyName': regexQuery },
+        { 'professionalDetails.workingCity': regexQuery },
+        { 'contactDetails.presentAddress.city': regexQuery },
+        { 'contactDetails.presentAddress.area': regexQuery },
+    ];
+
+    // if (isValidObjectId) {
+    //     matchConditions.push(
+    //         { _id: new Types.ObjectId(query) },
+    //         { userId: new Types.ObjectId(query) }
+    //     );
+    // }
+
+    const results = await matrimonyProfileModel.aggregate([
+        { $match: { $or: matchConditions } },
+        {
+            $project: {
+                profilePhotos: { $slice: ['$profilePhotos', 1] }, // Only first image
+                'personalDetails.dateOfBirth': 1,
+                'personalDetails.fullName': 1,
+                'contactDetails.presentAddress.city': 1,
+                'religiousDetails.caste': 1,
+                'religiousDetails.subCaste': 1,
+            }
+        },
+        { $limit: 20 }
+    ]);
 
     res.status(200).json(new ApiResponse(200, results, 'Search Results'));
 });
