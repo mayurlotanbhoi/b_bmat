@@ -6,6 +6,8 @@ import { ApiResponse } from '../middleware/ApiResponse.js';
 import { ApiError } from '../middleware/ApiError.js';
 import { parseDotNotation } from '../utils/parseDotNotation.js';
 import { Types } from 'mongoose';
+import UserModel from '../models/user.model.js';
+import { sendNotification } from '../routes/notifications.js';
 interface CustomRequest extends Request {
     loginUser?: any; // or define the type of loginUser
 }
@@ -36,6 +38,41 @@ export const createProfile = asyncHandler(async (req: CustomRequest, res: Respon
 
     const newProfile = await matrimonyProfileModel.createMatrimonyProfile(validatedProfile);
     console.log(newProfile, 'newProfile');
+
+    const newGender = newProfile.personalDetails.gender;
+    const oppositeGender = newGender === 'Male' ? 'Female' : 'Male';
+
+    // Find opposite gender profiles with maritalStatus = Divorcee or Widow
+    const matchedProfiles = await matrimonyProfileModel.find({
+        'personalDetails.gender': oppositeGender,
+        'personalDetails.maritalStatus': { $in: ['Divorced', 'Widow'] },
+    }).select('userId');
+
+    // Extract userIds
+    const userIds = matchedProfiles.map(profile => profile.userId);
+
+    // Get FCM tokens for those users
+    const usersWithFcm = await UserModel.find({ _id: { $in: userIds } }).select('fcmTokens');
+
+    // Extract all tokens into a flat array
+    const tokens: string[] = usersWithFcm.flatMap(user => user.fcmTokens || []);
+
+    // if (allTokens.length === 0) return;
+
+    // Send notification to all matching users
+    // for (const token of allTokens) {
+
+
+    if (tokens.length !== 0) {
+        await sendNotification({
+            tokens,
+            title: 'New Profile Alert!',
+            body: 'A new profile matching your preferences has been added.',
+            url: '/matrimony/search',
+            click_action: '/matrimony/search',
+            imageUrl: '', // Optional: Add image path if you want a thumbnail
+        });
+    }
 
     res
         .status(201)

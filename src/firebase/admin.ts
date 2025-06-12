@@ -70,26 +70,59 @@ admin.initializeApp({
 // Initialize firebase admin SDK once somewhere in your app
 // Make sure to pass serviceAccount from env variables as you already do
 
-export async function sendNotification(token: string, payload: any) {
-  const message = {
-    token,
+
+// `tokens` can be a single token (string) or array of tokens
+export async function sendNotification(tokens: string | string[], payload: {
+  title: string,
+  body: string,
+  click_action?: string,
+  data?: Record<string, string>
+}) {
+  const messageBase = {
     notification: {
       title: payload.title || 'Notification',
       body: payload.body || '',
     },
     webpush: {
       headers: {
-        Urgency: 'high'
+        Urgency: 'high',
       },
       notification: {
         icon: '/icon.png',
-        click_action: payload.click_action || '/'
-      }
-    }
+        click_action: payload.click_action || '/',
+      },
+    },
+    data: payload.data || {}, // Optional custom data
   };
 
-  return admin.messaging().send(message);
+  try {
+    // Single user notification
+    if (typeof tokens === 'string') {
+      const response = await admin.messaging().send({
+        ...messageBase,
+        token: tokens,
+      });
+      console.log('Single notification sent:', response);
+      return response;
+    }
+
+    // Broadcast notification to multiple users
+    if (Array.isArray(tokens) && tokens.length > 0) {
+      const response = await admin.messaging().sendEachForMulticast({
+        ...messageBase,
+        tokens,
+      });
+      console.log('Multicast notification sent:', response);
+      return response;
+    }
+
+    throw new Error('No valid tokens provided.');
+  } catch (error) {
+    console.error('Error sending notification:', error);
+    throw error;
+  }
 }
+
 
 
 
