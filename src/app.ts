@@ -19,7 +19,7 @@ app.use(express.json({ limit: '16kb' })); // ✅ Parse JSON body correctly
 app.use(express.urlencoded({ extended: true }));
 app.use(express.static('public'));
 app.use(cookieParser('yourSecretKey'));
-app.use(cors({ origin: ['https://bmat.onrender.com', 'http://localhost:5173','https://5173-mayurlotanbhoi-fbmat-uaiurd3o9t9.ws-us120.gitpod.io/auth'], credentials: true }));
+app.use(cors({ origin: ['https://bmat.onrender.com', 'http://localhost:5173','https://5173-mayurlotanbhoi-fbmat-uaiurd3o9t9.ws-us120.gitpod.io'], credentials: true }));
 app.use(morgan(':method :url :status :res[content-length] - :response-time ms'));
 
 dotenv.config();
