@@ -8,6 +8,7 @@ import { parseDotNotation } from '../utils/parseDotNotation.js';
 import { Types } from 'mongoose';
 import UserModel from '../models/user.model.js';
 import { sendNotification } from '../routes/notifications.js';
+import { notificationService } from '../services/index.js';
 interface CustomRequest extends Request {
     loginUser?: any; // or define the type of loginUser
 }
@@ -64,14 +65,24 @@ export const createProfile = asyncHandler(async (req: CustomRequest, res: Respon
 
 
     if (tokens.length !== 0) {
-        await sendNotification({
+
+        const payload = {
             tokens,
             title: 'New Profile Alert!',
             body: 'A new profile matching your preferences has been added.',
             url: '/matrimony/search',
             click_action: '/matrimony/search',
             imageUrl: profile?.profilePhotos[0], // Optional: Add image path if you want a thumbnail
-        });
+        }
+        await notificationService.send(payload);
+        // await sendNotification({
+        //     tokens,
+        //     title: 'New Profile Alert!',
+        //     body: 'A new profile matching your preferences has been added.',
+        //     url: '/matrimony/search',
+        //     click_action: '/matrimony/search',
+        //     imageUrl: profile?.profilePhotos[0], // Optional: Add image path if you want a thumbnail
+        // });
     }
 
     res

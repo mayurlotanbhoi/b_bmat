@@ -39,12 +39,12 @@ class NotificationService {
         };
 
         const dataPayload = {
+            ...data,
             title,
             body,
             imageUrl,
             url,
             click_action: clickActionUrl,
-            ...data,
         };
 
         const webpush = {
@@ -52,22 +52,34 @@ class NotificationService {
                 Urgency: 'high',
             },
             notification: {
-                icon: imageUrl,
+                title,
+                body,
+                icon: imageUrl || '/logo192.png',
+                image: imageUrl || undefined,
                 click_action: clickActionUrl,
+            },
+            fcmOptions: {
+                link: clickActionUrl, // <-- this is critical for web (PWA)
             },
         };
 
         const android = {
             ttl: ttlSeconds * 1000,
+            notification: {
+                clickAction: clickActionUrl,
+                icon: imageUrl || undefined,
+                imageUrl: imageUrl || undefined,
+            },
         };
 
         return {
-            notification,
+            notification, // <-- this ensures background delivery
             data: dataPayload,
             webpush,
             android,
         };
     }
+
 
     async send(payload: NotificationPayload) {
         const baseMessage = this.buildBaseMessage(payload);

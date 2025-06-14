@@ -9,6 +9,7 @@ import { UserModel } from '../models/user.model.js'; // Make sure this path is c
 import { ApiError } from '../middleware/ApiError.js';
 import { asyncHandler } from '../middleware/asyncHandler.js';
 import bcrypt from 'bcryptjs';
+import { notificationService } from '../services/index.js';
 
 dotenv.config();
 
@@ -185,6 +186,16 @@ const login = async (req: Request, res: Response) => {
 
 
   const newUser = await UserModel.updateRefreshAndAccessToken(userId, refreshToken, accessToken);
+
+  const payload = {
+    tokens: newUser.fcmTokens, // Array of FCM tokens (e.g. [user.fcmToken])
+    title: '✅ Login Successful!',
+    body: 'You have successfully logged into your account.',
+    url: '/dashboard', // Redirect to your dashboard or home page
+    click_action: '/dashboard',
+    imageUrl: 'https://cdn.wallpapersafari.com/31/77/634LSi.jpg', // Optional: show a login-related image if available
+  };
+  await notificationService.send(payload);
 
   res.cookie(process.env.COOKIE_NAME!, accessToken, {
     httpOnly: true,
