@@ -70,7 +70,7 @@ export const createProfile = asyncHandler(async (req: CustomRequest, res: Respon
             body: 'A new profile matching your preferences has been added.',
             url: '/matrimony/search',
             click_action: '/matrimony/search',
-            imageUrl: '', // Optional: Add image path if you want a thumbnail
+            imageUrl: profile?.profilePhotos[0], // Optional: Add image path if you want a thumbnail
         });
     }
 

@@ -40,45 +40,57 @@ import { Router, Request, Response } from 'express';
 // import { sendNotification } from '../firebase/admin.js'; // this expects FCM token string
 import admin from 'firebase-admin';
 import { UserModel } from '../models/user.model.js'; // Make sure this path is correct
+import { notificationService } from '../services/index.js';
+import { asyncHandler } from '../middleware/asyncHandler.js';
 const router = Router();
 
 
 
 // Type for payload input
-interface NotificationPayload {
-  title: string;
-  body: string;
+
+
+export interface NotificationPayload {
+  title?: string;
+  body?: string;
   imageUrl?: string;
   url?: string;
   click_action?: string;
-  tokens?: string[];       // for multicast
-  token?: string;          // for single device
-  topic?: string;          // for broadcast
-  data?: Record<string, string>; // additional custom data
+  data?: Record<string, any>;
+  token?: string;
+  tokens?: string[];
+  topic?: string;
 }
 
-// Unified Notification Sender
 export const sendNotification = async (payload: NotificationPayload) => {
-  const notification = {
-    title: payload.title,
-    body: payload.body,
-    image: payload.imageUrl || undefined,
-  };
+  const {
+    title = '🔔 New Notification',
+    body = 'You have a new message.',
+    imageUrl = '',
+    url = '/',
+    click_action,
+    data = {},
+    token,
+    tokens,
+    topic,
+  } = payload;
 
+  const targetUrl = click_action || url;
+
+  const notification = { title, body, image: imageUrl };
   const dataPayload = {
-    url: payload.url || '/',
-    click_action: payload.click_action || payload.url || '/',
-    title: payload.title,
-    body: payload.body,
-    imageUrl: payload.imageUrl || '',
-    ...(payload.data || {}),
+    title,
+    body,
+    imageUrl,
+    url,
+    click_action: targetUrl,
+    ...data,
   };
 
   const webpushOptions = {
     headers: { Urgency: 'high' },
     notification: {
-      icon: payload.imageUrl || '',
-      click_action: payload.click_action || payload.url || '/',
+      icon: imageUrl,
+      click_action: targetUrl,
     },
   };
 
@@ -89,63 +101,50 @@ export const sendNotification = async (payload: NotificationPayload) => {
   };
 
   try {
-    // 1. Single device
-    if (payload.token) {
-      const message = { token: payload.token, ...baseMessage };
+    // Send to single token
+    if (token) {
+      const message = { token, ...baseMessage };
       const response = await admin.messaging().send(message);
       return { success: true, type: 'single', response };
     }
 
-    // 2. Multiple devices (manual send loop)
-    if (payload.tokens && payload.tokens.length > 0) {
-      const responses = await Promise.all(
-        payload.tokens.map(async (token) => {
-          try {
-            const message = { token, ...baseMessage };
-            const res = await admin.messaging().send(message);
-            return { success: true, token, response: res };
-          } catch (error: any) {
-            return { success: false, token, error };
-          }
-        })
-      );
+    // Send to multiple tokens manually
+    if (Array.isArray(tokens) && tokens.length > 0) {
+      const responses = await Promise.all(tokens.map(async (tkn) => {
+        try {
+          const message = { token: tkn, ...baseMessage };
+          const res = await admin.messaging().send(message);
+          return { success: true, token: tkn, response: res };
+        } catch (error: any) {
+          return { success: false, token: tkn, error };
+        }
+      }));
 
       const invalidTokens: string[] = [];
       let successCount = 0;
       let failureCount = 0;
 
-      responses.forEach((resp) => {
+      responses.forEach(resp => {
         if (resp.success) {
           successCount++;
         } else {
           failureCount++;
-          const errorCode = resp.error?.code;
-          if (
-            errorCode === 'messaging/invalid-registration-token' ||
-            errorCode === 'messaging/registration-token-not-registered'
-          ) {
+          const code = resp.error?.code;
+          if (['messaging/invalid-registration-token', 'messaging/registration-token-not-registered'].includes(code)) {
             invalidTokens.push(resp.token);
           }
         }
       });
 
       // Remove invalid tokens from DB
-      if (invalidTokens.length > 0) {
-        try {
-          await UserModel.updateMany(
-            {},
-            { $pull: { fcmTokens: { $in: invalidTokens } } }
-          );
-        } catch (error) {
-
-        }
-
-        console.log(`Cleaned ${invalidTokens.length} invalid tokens from DB.`);
+      if (invalidTokens.length) {
+        await UserModel.updateMany({}, { $pull: { fcmTokens: { $in: invalidTokens } } });
+        console.log(`Removed ${invalidTokens.length} invalid tokens`);
       }
 
       return {
         success: true,
-        type: 'manual-multicast',
+        type: 'multicast',
         successCount,
         failureCount,
         invalidTokens,
@@ -153,62 +152,70 @@ export const sendNotification = async (payload: NotificationPayload) => {
       };
     }
 
-    // 3. Topic broadcast
-    if (payload.topic) {
-      const message = { topic: payload.topic, ...baseMessage };
+    // Send to topic
+    if (topic) {
+      const message = { topic, ...baseMessage };
       const response = await admin.messaging().send(message);
       return { success: true, type: 'topic', response };
     }
 
-    throw new Error('No valid target provided (token, tokens[], or topic)');
+    throw new Error('No valid recipient provided: token, tokens[], or topic');
   } catch (error: any) {
-    console.error('FCM send error:', error);
-    return { success: false, error: error.message || 'Unknown error' };
+    console.error('Notification send error:', error);
+    return {
+      success: false,
+      error: error.message || 'Unknown error occurred during notification send',
+    };
   }
 };
+
 
 
 // Store FCM tokens by userId
 // const tokens = new Map<string, string>();
 
-router.post('/send-notification', async (req: Request<{}, {}, NotificationPayload>, res: Response) => {
+router.post('/send-notification', asyncHandler(async (req: Request<{}, {}, NotificationPayload>, res: Response) => {
   try {
     const payload = req.body;
 
-    // Get all FCM tokens from the database
-    const users = await UserModel.find({ fcmTokens: { $exists: true, $ne: [] } }, 'fcmTokens');
+    const genderFilter = payload.data?.gender
+      ? { gender: payload.data.gender, fcmTokens: { $exists: true, $ne: [] } }
+      : { fcmTokens: { $exists: true, $ne: [] } };
+
+    const users = await UserModel.find(genderFilter, 'fcmTokens');
     const tokens: string[] = users.flatMap(user => user.fcmTokens || []);
 
     if (!tokens.length) {
       res.status(400).json({
         success: false,
-        message: 'No FCM tokens found',
+        message: 'No valid FCM tokens found',
       });
       return
     }
 
-
-    const result = await sendNotification({
-      ...payload,
-      tokens,
-    });
+    const result = await notificationService.send({ ...payload, tokens });
+    console.log("✅ Notification result:", JSON.stringify(result, null, 2));
 
     res.json({
       success: result.success,
       type: result.type,
-      // sent: result.successCount || 0,
-      // failed: result.failureCount || 0,
-      // errors: result.responses?.filter(r => !r.success).map(r => r.error?.message) || [],
+      total: tokens.length,
+      sent: result.successCount || 0,
+      failed: result.failureCount || 0,
+      invalidTokens: result.invalidTokens || [],
+      errors: result.responses?.filter(r => !r.success).map(r => r.error?.message) || [],
     });
     return
   } catch (error: any) {
     console.error('Notification send error:', error);
     res.status(500).json({
       success: false,
-      error: error.message || 'Internal Server Error',
+      error: error?.message || 'Internal Server Error',
     });
+    return
   }
-});
+}));
+
 
 
 

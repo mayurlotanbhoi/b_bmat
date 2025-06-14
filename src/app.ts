@@ -6,6 +6,7 @@ import cors from 'cors'
 import path from 'path';
 import morgan from "morgan";
 import { fileURLToPath } from 'url';
+import admin from "firebase-admin";
 // import serviceAccount from "./firebase/serviceAccountKey.json" with { type: "json" };
 import { errorHandler } from "./middleware/errorHandler.js";
 
@@ -19,7 +20,7 @@ app.use(express.json({ limit: '16kb' })); // ✅ Parse JSON body correctly
 app.use(express.urlencoded({ extended: true }));
 app.use(express.static('public'));
 app.use(cookieParser('yourSecretKey'));
-app.use(cors({ origin: ['https://bmat.onrender.com', 'http://localhost:5173','https://5173-mayurlotanbhoi-fbmat-uaiurd3o9t9.ws-us120.gitpod.io'], credentials: true }));
+app.use(cors({ origin: ['https://bmat.onrender.com', 'http://localhost:5173', 'https://5173-mayurlotanbhoi-fbmat-uaiurd3o9t9.ws-us120.gitpod.io'], credentials: true }));
 app.use(morgan(':method :url :status :res[content-length] - :response-time ms'));
 
 dotenv.config();
@@ -33,11 +34,11 @@ const __dirname = path.dirname(__filename);
 app.use('public', express.static(path.join(__dirname, '../uploads')));
 
 
-// const serviceAccount = JSON.parse(process.env.FIREBASE_SERVICE_ACCOUNT_JSON!);
+const serviceAccount = JSON.parse(process.env.FIREBASE_SERVICE_ACCOUNT_JSON!);
 
-// admin.initializeApp({
-//   credential: admin.credential.cert(serviceAccount),
-// });
+admin.initializeApp({
+  credential: admin.credential.cert(serviceAccount),
+});
 
 process.on('unhandledRejection', (reason, promise) => {
   console.error('Unhandled Rejection at:', promise, 'reason:', reason);
