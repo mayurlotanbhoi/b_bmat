@@ -8,3 +8,7 @@ declare module 'express-serve-static-core' {
     };
   }
 }
+
+interface CustomRequest extends Request {
+  loginUser?: any; // or define the type of loginUser
+}
