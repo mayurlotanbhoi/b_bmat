@@ -100,3 +100,13 @@ export const markBiodataViewed = asyncHandler(async (req: Request, res: Response
 
     res.status(200).json(new ApiResponse(200, biodata, 'Marked as viewed'));
 });
+
+export const getBioData = asyncHandler(async (req: Request, res: Response) => {
+    const { id } = req.params;
+    console.log(id);
+    const biodata = await matrimonyProfileModel.findById(id);
+    if (!biodata) {
+        throw new ApiError(404, 'Shared biodata not found');
+    }
+    res.status(200).json(new ApiResponse(200, biodata, 'Biodata fetched successfully'));
+})

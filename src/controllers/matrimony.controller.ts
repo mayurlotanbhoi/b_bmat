@@ -183,17 +183,17 @@ export const updateProfile = asyncHandler(async (req: CustomRequest, res: Respon
         throw new ApiError(404, 'Profile not found');
     }
 
-    console.log('req.body.compressedImages', req.body.compressedImages);
+    console.log('req.body.compressedImages', req?.body?.compressedImages);
 
     // ✅ Safely update profilePhotos using imageIndexes
-    if ((Array.isArray(profile.imageIndexes) || profile.imageIndexes === '0') || Array.isArray(req.body.compressedImages)) {
+    if ((Array.isArray(profile?.imageIndexes) || profile?.imageIndexes === '0') || Array.isArray(req.body.compressedImages)) {
         // Ensure profilePhotos is initialized
-        if (!Array.isArray(profile.profilePhotos)) {
-            profile.profilePhotos = [...(existingProfile.profilePhotos || [])];
+        if (!Array.isArray(profile?.profilePhotos)) {
+            profile.profilePhotos = [...(existingProfile?.profilePhotos || [])];
         }
 
-        for (let i = 0; i < profile.imageIndexes.length; i++) {
-            const imageIndex = Number(profile.imageIndexes[i]);
+        for (let i = 0; i < profile?.imageIndexes?.length; i++) {
+            const imageIndex = Number(profile?.imageIndexes[i]);
             const fileName = req.body.compressedImages[i]?.fileName;
 
             if (!isNaN(imageIndex) && fileName) {
@@ -204,7 +204,7 @@ export const updateProfile = asyncHandler(async (req: CustomRequest, res: Respon
 
     // ✅ Handle verification image
     if (req.body?.compressedVerificationImage?.fileName) {
-        profile.verificationImage = req.body.compressedVerificationImage.fileName;
+        profile.verificationImage = req.body?.compressedVerificationImage?.fileName;
     }
 
     // ✅ Attach userId
