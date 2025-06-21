@@ -38,6 +38,7 @@ const profileSchema = new Schema<IProfile>({
         max: 100,
         default: 0,
     },
+
     personalDetails: {
         fullName: { type: String, required: true, trim: true },
         gender: { type: String, enum: GENDER, required: true },
@@ -137,6 +138,19 @@ const profileSchema = new Schema<IProfile>({
         type: String,
         enum: ['Active', 'Inactive', 'Pending', 'Suspended'],
         default: 'Active'
+    },
+    lat: { type: Number },
+    lon: { type: Number },
+    address: {
+        city_district: String,
+        city: String,
+        county: String,
+        state_district: String,
+        state: String,
+        'ISO3166-2-lvl4': String,
+        postcode: String,
+        country: String,
+        country_code: String
     },
 
     organization: { type: String, required: false, default: 'NA' },

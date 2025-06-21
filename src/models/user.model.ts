@@ -7,6 +7,17 @@ import bcrypt from 'bcryptjs';
 export interface IUser extends Document {
   _id: Types.ObjectId;
   uid: string;
+  address: {
+    city_district: { type: String },
+    city: { type: String },
+    county: { type: String },
+    state_district: { type: String },
+    state: { type: String },
+    'ISO3166-2-lvl4': { type: String },
+    postcode: { type: String },
+    country: { type: String },
+    country_code: { type: String }
+  },
 
   name: string;
   location?: string | null;
@@ -67,6 +78,17 @@ const userSchema = new Schema<IUser>(
     name: { type: String, trim: true },
     location: { type: String, default: null, trim: true },
     language: { type: String, default: 'en' },
+    address: {
+      city_district: String,
+      city: String,
+      county: String,
+      state_district: String,
+      state: String,
+      'ISO3166-2-lvl4': String,
+      postcode: String,
+      country: String,
+      country_code: String
+    },
 
     coordinates: {
       type: {

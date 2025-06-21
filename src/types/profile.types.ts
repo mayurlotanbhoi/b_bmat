@@ -11,6 +11,19 @@ type EnumArray<T extends readonly string[]> = T[number];
 
 export interface IProfile extends Document {
     profileCompletion: Number,
+    lat: Number,
+    lon: Number,
+    address: {
+        city_district: { type: String },
+        city: { type: String },
+        county: { type: String },
+        state_district: { type: String },
+        state: { type: String },
+        'ISO3166-2-lvl4': { type: String },
+        postcode: { type: String },
+        country: { type: String },
+        country_code: { type: String }
+    },
     personalDetails: {
         fullName: string;
         gender: EnumArray<typeof GENDER>;

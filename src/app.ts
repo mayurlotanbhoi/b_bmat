@@ -52,11 +52,13 @@ import matrimony from "./routes/matrimony.routes.js";
 import cookieParser from "cookie-parser";
 import user from "./routes/user.routes.js";
 import biodata from "./routes/biodata.routes.js";
+import locatation from "./routes/location.routes.js";
 
 
 
 app.use('/api/v1/notifications', notificationRoutes);
 app.use('/api/v1/matrimony', matrimony);
+app.use('/api/v1/location', locatation);
 app.use('/api/v1/biodata', biodata)
 app.use('/api/v1/auth', authRoutes);
 app.use('/api/v1/user', user);
