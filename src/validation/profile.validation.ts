@@ -95,7 +95,7 @@ const profileValidationSchema = yup.object({
         companyName: yup.string().nullable(),
         income: yup.string().nullable(),
         workingCity: yup.string().nullable(),
-        jobType: yup.string().nullable(),
+        jobType: yup.string().required("Job type is required"),
         workFromHome: yup.string().nullable().default('No'),
     }),
 
@@ -114,6 +114,7 @@ const profileValidationSchema = yup.object({
         subCaste: yup.string().nullable(),
         education: yup.array().nullable(),
         occupation: yup.array().nullable(),
+        jobType: yup.array().nullable(),
         locationPreference: yup.string().nullable(),
     }),
 
@@ -213,6 +214,11 @@ export const validatePartialProfile = async (
             const currentPath = prefix ? `${prefix}.${key}` : key;
 
             if (
+                Array.isArray(value)
+            ) {
+                // ✅ Validate array as a whole
+                await validateField(currentPath, value);
+            } else if (
                 value !== null &&
                 typeof value === "object" &&
                 !(value instanceof Date) &&
@@ -224,6 +230,7 @@ export const validatePartialProfile = async (
             }
         }
     };
+
 
     await traverse(partialData);
 

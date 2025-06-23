@@ -96,6 +96,7 @@ const profileSchema = new Schema<IProfile>({
         companyName: { type: String, default: 'NA' },
         income: { type: String, required: true, default: 'NA' },
         workingCity: { type: String, default: 'NA' },
+        jobType: { type: String, default: 'NA' },
         // jobType: { type: String, enum: JOB_TYPES },
         workFromHome: { type: String, default: 'No' },
     },
@@ -113,8 +114,9 @@ const profileSchema = new Schema<IProfile>({
         income: { type: String, default: 'NA' },
         caste: { type: String, default: 'NA' },
         subCaste: { type: String, default: 'NA' },
-        education: { type: [String], default: 'NA' },
-        occupation: { type: [String], default: 'NA' },
+        education: { type: [String], default: [] },
+        occupation: { type: [String], default: [] },
+        jobType: { type: [String], default: [] },
         locationPreference: { type: String, default: 'NA' }
     },
 
@@ -158,7 +160,6 @@ const profileSchema = new Schema<IProfile>({
     userId: { type: Schema.Types.ObjectId, ref: 'User', required: true },
 
     profileCreatedBy: {
-
         type: String,
         enum: ['Self', 'Parent', 'Sibling', 'Relative', 'Other'],
         required: true

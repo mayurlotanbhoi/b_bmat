@@ -20,7 +20,10 @@ app.use(express.json({ limit: '16kb' })); // ✅ Parse JSON body correctly
 app.use(express.urlencoded({ extended: true }));
 app.use(express.static('public'));
 app.use(cookieParser('yourSecretKey'));
-app.use(cors({ origin: ['https://bmat.onrender.com', 'http://localhost:5173', 'https://5173-mayurlotanbhoi-fbmat-uaiurd3o9t9.ws-us120.gitpod.io'], credentials: true }));
+app.use(cors({
+  origin: ['https://bmat.onrender.com', 'http://localhost:5173', 'https://5173-mayurlotanbhoi-fbmat-uaiurd3o9t9.ws-us120.gitpod.io'],
+  credentials: true
+}));
 app.use(morgan(':method :url :status :res[content-length] - :response-time ms'));
 
 dotenv.config();
@@ -31,7 +34,15 @@ const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
 // Serve static files from /public
-app.use('public', express.static(path.join(__dirname, '../uploads')));
+// app.use('public', express.static(path.join(__dirname, '../uploads')));
+
+app.use('/public', express.static(path.join(__dirname, '../uploads'), {
+  setHeaders: (res, filePath) => {
+    // ✅ Serve CORS headers for static images
+    res.setHeader('Access-Control-Allow-Origin', 'http://localhost:5173'); // Or the frontend domain you're using
+    res.setHeader('Access-Control-Allow-Credentials', 'true');
+  },
+}));
 
 
 const serviceAccount = JSON.parse(process.env.FIREBASE_SERVICE_ACCOUNT_JSON!);

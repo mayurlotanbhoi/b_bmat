@@ -8,6 +8,7 @@ import { parseDotNotation } from '../utils/parseDotNotation.js';
 import { Types } from 'mongoose';
 import UserModel from '../models/user.model.js';
 import { sendNotification } from '../routes/notifications.js';
+import stringSimilarity from 'string-similarity';
 import { notificationService } from '../services/index.js';
 interface CustomRequest extends Request {
     loginUser?: any; // or define the type of loginUser
@@ -174,6 +175,8 @@ export const updateProfile = asyncHandler(async (req: CustomRequest, res: Respon
 
     // Parse nested fields from dot-notation
     const profile = parseDotNotation(req.body);
+
+    console.log("profile", profile)
     const { _id } = req.loginUser;
     const { id } = req.params;
 
@@ -183,7 +186,6 @@ export const updateProfile = asyncHandler(async (req: CustomRequest, res: Respon
         throw new ApiError(404, 'Profile not found');
     }
 
-    console.log('req.body.compressedImages', req?.body?.compressedImages);
 
     // ✅ Safely update profilePhotos using imageIndexes
     if ((Array.isArray(profile?.imageIndexes) || profile?.imageIndexes === '0') || Array.isArray(req.body.compressedImages)) {
@@ -209,7 +211,6 @@ export const updateProfile = asyncHandler(async (req: CustomRequest, res: Respon
 
     // ✅ Attach userId
     profile.userId = _id;
-    console.log('profile.profilePhotos', profile.profilePhotos);
 
 
     // ✅ Validate updated fields only
@@ -246,6 +247,10 @@ export const updateProfile = asyncHandler(async (req: CustomRequest, res: Respon
                 educationDetails: {
                     ...existingProfile.educationDetails,
                     ...profile?.educationDetails,
+                },
+                expectation: {
+                    ...existingProfile.expectation,
+                    ...profile?.expectation,
                 },
                 contactDetails: {
                     ...existingProfile.contactDetails,
@@ -348,3 +353,100 @@ export const getAllProfiles = asyncHandler(async (req: Request, res: Response) =
         previousPage: currentPage > 1 ? currentPage - 1 : null
     }, 'Filtered profiles fetched successfully'));
 });
+
+
+export const getSmartMatches = asyncHandler(async (req: CustomRequest, res: Response) => {
+    console.log('req.body', req.loginUser._id);
+    const user = await matrimonyProfileModel.findOne({ userId: req.loginUser._id });
+
+    if (!user) {
+        return res.status(404).json({ success: false, message: 'User not found' });
+    }
+
+    const expectation = user?.expectation;
+    const genderToMatch = user.personalDetails.gender === 'Male' ? 'Female' : 'Male';
+
+    const allProfiles = await matrimonyProfileModel.find({
+        _id: { $ne: user._id },
+        'personalDetails.gender': genderToMatch,
+    });
+
+    const getAge = (dob: any) => new Date().getFullYear() - new Date(dob).getFullYear();
+
+    const matches = allProfiles.map((profile) => {
+        let score = 0;
+
+        // 🎯 Match Education (using similarity)
+        if (expectation?.education?.length) {
+            const bestMatch = stringSimilarity.findBestMatch(
+                profile.educationDetails.highestQualification || '',
+                expectation.education
+            );
+            if (bestMatch.bestMatch.rating > 0.6) score += 15;
+        }
+
+        // 🎯 Match Occupation (using similarity)
+        if (expectation?.occupation?.length) {
+            const bestMatch = stringSimilarity.findBestMatch(
+                profile.professionalDetails.occupation || '',
+                expectation.occupation
+            );
+            if (bestMatch.bestMatch.rating > 0.6) score += 15;
+        }
+
+        // 🎯 Religion
+        if (
+            expectation?.religion &&
+            expectation.religion !== 'NA' &&
+            stringSimilarity.compareTwoStrings(
+                profile.religiousDetails.religion || '',
+                expectation.religion
+            ) > 0.6
+        ) score += 10;
+
+        // 🎯 Caste
+        if (
+            expectation?.caste &&
+            expectation.caste !== 'NA' &&
+            stringSimilarity.compareTwoStrings(
+                profile.religiousDetails.caste || '',
+                expectation.caste
+            ) > 0.6
+        ) score += 10;
+
+        // 🎯 Manglik
+        if (profile.religiousDetails.manglik === user.religiousDetails.manglik) score += 5;
+
+        // 🎯 Eating Habits
+        if (profile.lifestyleDetails.eatingHabits === user.lifestyleDetails.eatingHabits) score += 3;
+
+        // 🎯 Age proximity ±5
+        const userAge = getAge(user.personalDetails.dateOfBirth);
+        const otherAge = getAge(profile.personalDetails.dateOfBirth);
+        if (Math.abs(userAge - otherAge) <= 5) score += 10;
+
+        // 🎯 Location match (City)
+        if (
+            expectation?.locationPreference &&
+            expectation.locationPreference !== 'NA' &&
+            stringSimilarity.compareTwoStrings(
+                profile.contactDetails.presentAddress.city || '',
+                expectation.locationPreference
+            ) > 0.6
+        ) score += 5;
+
+        return { profile, score };
+    });
+
+    const topMatches = matches
+        .sort((a, b) => b.score - a.score)
+        .slice(0, 10)
+        .map((m) => m.profile);
+
+    res.status(200).json({
+        success: true,
+        data: topMatches,
+        message: 'Top 10 daily matches',
+    });
+});
+
