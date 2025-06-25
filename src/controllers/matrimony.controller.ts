@@ -286,17 +286,15 @@ export const deleteProfile = asyncHandler(async (req: Request, res: Response) =>
 
 // ✅ Get All Profiles
 export const getAllProfiles = asyncHandler(async (req: Request, res: Response) => {
-
-    console.log('req.body', req.body);
     const {
         page = 1,
         limit = 10,
         ...filters
-    } = req.body;
-    console.log('filters', req.body);
+    } = req.query;
 
     const currentPage = Number(page);
     const perPage = Number(limit);
+    const skip = (currentPage - 1) * perPage;
 
     const fieldMap: Record<string, string> = {
         email: 'contactDetails.email',
@@ -313,31 +311,36 @@ export const getAllProfiles = asyncHandler(async (req: Request, res: Response) =
         income: 'professionalDetails.income',
         height: 'personalDetails.height',
         education: 'educationDetails.highestQualification',
-        candidateTypes: 'candidateTypes' // special handling
+        candidateTypes: 'candidateTypes'
     };
 
     const filter: Record<string, any> = {};
 
     for (const key in filters) {
-        const value = filters[key];
-        if (!value) continue;
+        const rawValue = filters[key];
+        if (!rawValue) continue;
+
+        const value = Array.isArray(rawValue) ? rawValue : String(rawValue).trim();
+        if (value === '') continue;
 
         if (key === 'candidateTypes') {
-            const val = (value as string).toLowerCase();
+            const val = String(value).toLowerCase();
             if (val === 'bride') filter['personalDetails.gender'] = 'Female';
             else if (val === 'groom') filter['personalDetails.gender'] = 'Male';
             else if (val === 'divorced') filter['personalDetails.maritalStatus'] = 'Divorced';
             else if (val === 'widow') filter['personalDetails.maritalStatus'] = 'Widow';
         } else if (fieldMap[key]) {
-            filter[fieldMap[key]] = { $regex: value, $options: 'i' };
+            if (Array.isArray(value)) {
+                filter[fieldMap[key]] = { $in: value };
+            } else {
+                filter[fieldMap[key]] = { $regex: value, $options: 'i' };
+            }
         }
     }
 
-    const skip = (currentPage - 1) * perPage;
-
     const [totalResults, profiles] = await Promise.all([
         matrimonyProfileModel.countDocuments(filter),
-        matrimonyProfileModel.find(filter).skip(skip).limit(perPage)
+        matrimonyProfileModel.find(filter).skip(skip).limit(perPage).lean()
     ]);
 
     const totalPages = Math.ceil(totalResults / perPage);
@@ -353,6 +356,7 @@ export const getAllProfiles = asyncHandler(async (req: Request, res: Response) =
         previousPage: currentPage > 1 ? currentPage - 1 : null
     }, 'Filtered profiles fetched successfully'));
 });
+
 
 
 export const getSmartMatches = asyncHandler(async (req: CustomRequest, res: Response) => {
