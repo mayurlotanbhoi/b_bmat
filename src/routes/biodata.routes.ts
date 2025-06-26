@@ -6,9 +6,12 @@ import { shareBiodata, getSharedBiodatas, markBiodataViewed, getBioData } from '
 
 const router = express.Router();
 
+// FIXED ORDER: specific routes first
+router.get('/shared', authMiddleware, getSharedBiodatas);
 router.get('/view/:id', authMiddleware, markBiodataViewed);
+
+// keep dynamic route at the bottom
 router.get('/:id', authMiddleware, getBioData);
 router.post('/share', authMiddleware, shareBiodata);
-router.get('/shared', authMiddleware, getSharedBiodatas);
 
 export default router;

@@ -57,7 +57,9 @@ export const shareBiodata = asyncHandler(async (req: CustomRequest, res: Respons
 
 // GET: Get sent/received biodatas
 export const getSharedBiodatas = asyncHandler(async (req: CustomRequest, res: Response) => {
-    const userId = req.loginUser._id;
+    console.log("req?.loginUser?._id", req?.loginUser?._id);
+    const userId = req?.loginUser?._id;
+    console.log("userId", userId);
 
     if (!userId) {
         throw new ApiError(400, 'User not found in request');
