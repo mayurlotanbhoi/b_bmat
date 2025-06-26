@@ -6,9 +6,9 @@ import { shareBiodata, getSharedBiodatas, markBiodataViewed, getBioData } from '
 
 const router = express.Router();
 
+router.get('/view/:id', authMiddleware, markBiodataViewed);
+router.get('/:id', authMiddleware, getBioData);
 router.post('/share', authMiddleware, shareBiodata);
 router.get('/shared', authMiddleware, getSharedBiodatas);
-router.patch('/view/:id', authMiddleware, markBiodataViewed);
-router.get('/:id', authMiddleware, getBioData);
 
 export default router;

@@ -84,22 +84,52 @@ export const getSharedBiodatas = asyncHandler(async (req: CustomRequest, res: Re
     );
 });
 
-// PATCH: Mark as viewed
-export const markBiodataViewed = asyncHandler(async (req: Request, res: Response) => {
-    const { id } = req.params;
+export const markBiodataViewed = asyncHandler(async (req: CustomRequest, res: Response) => {
+    const { id: profileOwnerUserId } = req.params; // The user whose profile is being viewed
+    const viewerUserId = req.loginUser._id; // The user who is viewing
 
-    const biodata = await sharedBiodataModel.findByIdAndUpdate(
-        id,
+    console.log("Viewing profile of user ID:", profileOwnerUserId);
+    console.log("Viewer user ID:", viewerUserId);
+
+    const profileOwner = await UserModel.findById(profileOwnerUserId);
+    const viewerProfile = await matrimonyProfileModel.findOne({ userId: viewerUserId });
+
+    if (!viewerProfile) {
+        throw new ApiError(404, "Viewer's profile not found");
+    }
+
+    if (!profileOwner) {
+        throw new ApiError(404, "Profile owner not found");
+    }
+
+    // Send FCM notification to profile owner
+    console.log("profileOwner.fcmTokens", profileOwner.fcmTokens);
+    // @ts-ignore
+    if (profileOwner.fcmTokens?.length > 0) {
+        await notificationService.send({
+            tokens: profileOwner.fcmTokens,
+            title: '👀 Someone viewed your biodata!',
+            body: `Your profile was viewed by ${viewerProfile.personalDetails?.fullName || 'a user'}.`,
+            url: `/matrimony/view-profile/${viewerProfile._id}`,
+            click_action: `/matrimony/view-profile/${viewerProfile._id}`,
+            imageUrl: viewerProfile.profilePhotos?.[0], // if available
+        });
+    }
+
+    // Mark the biodata as viewed in sharedBiodataModel
+    const biodata = await sharedBiodataModel.findOneAndUpdate(
+        { fromUser: profileOwnerUserId, toUser: viewerUserId },
         { isViewed: true, viewedAt: new Date() },
         { new: true }
     );
 
     if (!biodata) {
-        throw new ApiError(404, 'Shared biodata not found');
+        throw new ApiError(404, 'Shared biodata not found between these users');
     }
 
-    res.status(200).json(new ApiResponse(200, biodata, 'Marked as viewed'));
+    res.status(200).json(new ApiResponse(200, biodata, 'Marked as viewed and notification sent'));
 });
+
 
 export const getBioData = asyncHandler(async (req: Request, res: Response) => {
     const { id } = req.params;
