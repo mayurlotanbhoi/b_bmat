@@ -42,8 +42,11 @@ import admin from 'firebase-admin';
 import { UserModel } from '../models/user.model.js'; // Make sure this path is correct
 import { notificationService } from '../services/index.js';
 import { asyncHandler } from '../middleware/asyncHandler.js';
+import { sendProfileVeiwedNotification } from '../controllers/notifications.controller.js';
+import { authMiddleware } from '../middleware/auth.middleware.js';
 const router = Router();
 
+router.get('/profile-viewed', authMiddleware, sendProfileVeiwedNotification)
 
 
 // Type for payload input
@@ -244,6 +247,7 @@ router.post('/save-subscription', async (req: Request, res: Response) => {
     res.status(500).json({ success: false, error: error.message || 'Internal Server Error' });
   }
 });
+
 
 export default router;
 
