@@ -3,7 +3,6 @@ import { asyncHandler } from '../middleware/asyncHandler.js';
 import { ApiResponse } from '../middleware/ApiResponse.js';
 import { ApiError } from '../middleware/ApiError.js';
 import { UserModel } from '../models/user.model.js'; // Make sure this path is correct
-
 import { notificationService } from '../services/index.js';
 import { CustomRequest } from '../types/express/index.js';
 import sharedBiodataModel from '../models/sharedBiodata.model.js';
@@ -46,9 +45,9 @@ export const shareBiodata = asyncHandler(async (req: CustomRequest, res: Respons
             tokens: receiver?.fcmTokens,
             title: '📩 New Biodata Received!',
             body: `You have received a profile from ${senderProfile.personalDetails?.fullName || 'a user'}.`,
-            url: `/matrimony/view-profile/${profileToShare._id}`,
-            click_action: `/matrimony/view-profile/${profileToShare._id}`,
-            imageUrl: profileToShare.profilePhotos?.[0],
+            url: `/matrimony/view-profile/${senderProfile._id}`,
+            click_action: `/matrimony/view-profile/${senderProfile._id}`,
+            imageUrl: senderProfile.profilePhotos?.[0],
         });
     }
 
