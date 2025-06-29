@@ -165,7 +165,7 @@ userSchema.statics.updateRefreshAndAccessToken = async function (
     userId,
     { $set: { refreshToken, accessToken } }, // avoids duplicates
     { new: true }
-  ).select('name address fcmTokens userRole mobile email profilePicture language');
+  ).select('name address location name fcmTokens userRole mobile email profilePicture language');
 };
 
 // =======================

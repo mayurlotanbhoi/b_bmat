@@ -14,7 +14,7 @@ export const getUser = async (req: CustomRequest, res: Response) => {
     try {
         // Google OAuth2 token verification logic
 
-        const user = await UserModel.findById(_id).select('name userRole address  mobile email profilePicture language');
+        const user = await UserModel.findById(_id).select('name userRole location address  mobile email profilePicture language');
         if (!user) {
             throw new ApiError(404, 'User not found');
         }
@@ -28,3 +28,33 @@ export const getUser = async (req: CustomRequest, res: Response) => {
         res.status(500).json(new ApiResponse(500, null, 'Google login failed'));
     }
 };
+
+export const updateUser = asyncHandler(async (req: CustomRequest, res: Response) => {
+    const { _id } = req.loginUser;
+
+    const {
+        location,
+        language,
+        mobile,
+        address,
+        compressedProfilePicture,
+    } = req.body;
+
+    const updatePayload: any = {
+        location,
+        language,
+        mobile,
+        address,
+    };
+
+    // Set compressed profile picture if provided
+    if (compressedProfilePicture?.fileName) {
+        updatePayload.profilePicture = compressedProfilePicture.fileName;
+    }
+
+    const updatedUser = await UserModel.findByIdAndUpdate(_id, {
+        $set: updatePayload,
+    }, { new: true });
+
+    res.status(200).json(new ApiResponse(200, {}, 'Profile updated successfully'));
+});

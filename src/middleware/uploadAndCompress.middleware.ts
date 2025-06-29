@@ -29,9 +29,14 @@ const storage = multer.diskStorage({
 });
 
 const fileFilter = (_req: Request, file: Express.Multer.File, cb: multer.FileFilterCallback) => {
+    console.log('Incoming file:', {
+        mimetype: file.mimetype,
+        originalname: file.originalname
+    });
+
     const allowed = ['image/jpeg', 'image/png', 'image/webp'];
     if (!allowed.includes(file.mimetype)) {
-        cb(new Error('Only JPEG, PNG, WEBP images are allowed'));
+        cb(new Error(`Unsupported file type: ${file.mimetype}`));
     } else {
         cb(null, true);
     }
@@ -43,7 +48,8 @@ const upload = multer({
     limits: { fileSize: 5 * 1024 * 1024 }, // 5 MB
 }).fields([
     { name: 'images', maxCount: 3 },
-    { name: 'verificationImage', maxCount: 1 }
+    { name: 'verificationImage', maxCount: 1 },
+    { name: 'profilePicture', maxCount: 1 }
 ]);
 
 export const convertFilePathToPublicUrl = (filePath: string, domain: string): string => {
@@ -56,19 +62,25 @@ export const convertFilePathToPublicUrl = (filePath: string, domain: string): st
 
 
 export const uploadAndCompressImages = (req: Request, res: Response, next: NextFunction) => {
+    console.log('req.files', req.files);
+
     upload(req, res, async (err) => {
-        //@ts-ignore
-        console.log('req.files', req.files);
         if (err) return res.status(400).json({ success: false, message: err.message });
 
         try {
-            //@ts-ignore
-            const images = req.files?.['images'] as Express.Multer.File[] || [];
-            //@ts-ignore
-            const verificationImages = req.files?.['verificationImage'] as Express.Multer.File[] || [];
-            const compressedImages = [];
+            const files = req.files as Record<string, Express.Multer.File[]> || {};
+            const domain = process.env.DOMAIN_NAME || 'http://localhost:5000';
 
-            for (const file of images) {
+            const images = files['images'] || [];
+            const verificationImages = files['verificationImage'] || [];
+
+            const compressedImages: any[] = [];
+            let compressedVerificationImage: any = null;
+            let compressedProfilePicture: any = null;
+            const compressedOtherFiles: Record<string, any[]> = {};
+
+            // Utility function to compress and delete
+            const compressFile = async (file: Express.Multer.File): Promise<any> => {
                 const ext = path.extname(file.originalname).toLowerCase();
                 const compressedFileName = `compressed-${file.filename.replace(ext, '.webp')}`;
                 const compressedPath = path.join(COMPRESSED_DIR, compressedFileName);
@@ -78,47 +90,130 @@ export const uploadAndCompressImages = (req: Request, res: Response, next: NextF
                     .webp({ quality: 80 })
                     .toFile(compressedPath);
 
-                fs.unlinkSync(file.path);
-
-                compressedImages.push({
-                    originalName: file.originalname,
-                    fileName: convertFilePathToPublicUrl(compressedPath, process.env.DOMAIN_NAME || 'default-domain.com'),
-                    path: compressedPath,
+                await fs.promises.unlink(file.path).catch((err) => {
+                    console.error('Failed to delete original file:', err.message);
                 });
-            }
 
-            // If you want to compress verificationImage too
-            let compressedVerificationImage = null;
-            if (verificationImages.length > 0) {
-                const vFile = verificationImages[0];
-                const ext = path.extname(vFile.originalname).toLowerCase();
-                const compressedFileName = `compressed-${vFile.filename.replace(ext, '.webp')}`;
-                const compressedPath = path.join(COMPRESSED_DIR, compressedFileName);
-
-                await sharp(vFile.path)
-                    .resize(1024, null, { fit: 'inside' })
-                    .webp({ quality: 80 })
-                    .toFile(compressedPath);
-
-                fs.unlinkSync(vFile.path);
-
-                compressedVerificationImage = {
-                    originalName: vFile.originalname,
-                    fileName: convertFilePathToPublicUrl(compressedPath, process.env.DOMAIN_NAME || 'default-domain.com'), // or compressedFileName,
+                return {
+                    originalName: file.originalname,
+                    fileName: convertFilePathToPublicUrl(compressedPath, domain),
                     path: compressedPath,
                 };
+            };
+
+            // Compress 'images'
+            for (const file of images) {
+                const compressed = await compressFile(file);
+                compressedImages.push(compressed);
             }
 
-            req.body.compressedImages = compressedImages;
-            if (compressedVerificationImage) {
-                req.body.compressedVerificationImage = compressedVerificationImage;
+            // Compress single 'verificationImage'
+            if (verificationImages.length > 0) {
+                compressedVerificationImage = await compressFile(verificationImages[0]);
             }
+
+            // Compress other fields (e.g., 'profilePicture', etc.)
+            for (const [field, fileArray] of Object.entries(files)) {
+                if (['images', 'verificationImage'].includes(field)) continue;
+
+                for (const file of fileArray) {
+                    const compressed = await compressFile(file);
+
+                    if (field === 'profilePicture') {
+                        compressedProfilePicture = compressed;
+                    } else {
+                        if (!compressedOtherFiles[field]) compressedOtherFiles[field] = [];
+                        compressedOtherFiles[field].push(compressed);
+                    }
+                }
+            }
+
+            // Attach compressed data to request body
+            req.body.compressedImages = compressedImages;
+            if (compressedVerificationImage) req.body.compressedVerificationImage = compressedVerificationImage;
+            if (compressedProfilePicture) req.body.compressedProfilePicture = compressedProfilePicture;
+            req.body.compressedOtherFiles = compressedOtherFiles;
 
             next();
-        } catch (error: any) {
+        } catch (error) {
             console.error('Compression error:', error);
             res.status(500).json({ success: false, message: 'Image compression failed' });
         }
     });
 };
+
+
+
+
+// export const uploadAndCompressImages = (req: Request, res: Response, next: NextFunction) => {
+//     console.log('req.files', req.files);
+//     upload(req, res, async (err) => {
+//         //@ts-ignore
+//         if (err) return res.status(400).json({ success: false, message: err.message });
+
+//         try {
+//             //@ts-ignore
+//             const images = req.files?.['images'] as Express.Multer.File[] || [];
+//             //@ts-ignore
+//             const verificationImages = req.files?.['verificationImage'] as Express.Multer.File[] || [];
+//             const compressedImages = [];
+
+//             for (const file of images) {
+//                 const ext = path.extname(file.originalname).toLowerCase();
+//                 const compressedFileName = `compressed-${file.filename.replace(ext, '.webp')}`;
+//                 const compressedPath = path.join(COMPRESSED_DIR, compressedFileName);
+
+//                 await sharp(file.path)
+//                     .resize(1024, null, { fit: 'inside' })
+//                     .webp({ quality: 80 })
+//                     .toFile(compressedPath);
+
+//                 fs.unlinkSync(file.path);
+
+//                 compressedImages.push({
+//                     originalName: file.originalname,
+//                     fileName: convertFilePathToPublicUrl(compressedPath, process.env.DOMAIN_NAME || 'default-domain.com'),
+//                     path: compressedPath,
+//                 });
+//             }
+
+//             // If you want to compress verificationImage too
+//             let compressedVerificationImage = null;
+//             if (verificationImages.length > 0) {
+//                 const vFile = verificationImages[0];
+//                 const ext = path.extname(vFile.originalname).toLowerCase();
+//                 const compressedFileName = `compressed-${vFile.filename.replace(ext, '.webp')}`;
+//                 const compressedPath = path.join(COMPRESSED_DIR, compressedFileName);
+
+//                 await sharp(vFile.path)
+//                     .resize(1024, null, { fit: 'inside' })
+//                     .webp({ quality: 80 })
+//                     .toFile(compressedPath);
+
+//                 fs.unlinkSync(vFile.path);
+
+//                 compressedVerificationImage = {
+//                     originalName: vFile.originalname,
+//                     fileName: convertFilePathToPublicUrl(compressedPath, process.env.DOMAIN_NAME || 'default-domain.com'), // or compressedFileName,
+//                     path: compressedPath,
+//                 };
+//             }
+
+//             req.body.compressedImages = compressedImages;
+//             if (compressedVerificationImage) {
+//                 req.body.compressedVerificationImage = compressedVerificationImage;
+//             }
+           
+
+           
+
+
+
+//             next();
+//         } catch (error: any) {
+//             console.error('Compression error:', error);
+//             res.status(500).json({ success: false, message: 'Image compression failed' });
+//         }
+//     });
+// };
 
