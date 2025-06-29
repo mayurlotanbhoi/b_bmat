@@ -96,7 +96,7 @@ const refreshToken = async (req: Request, res: Response) => {
     }
 
     // Find user by access token
-    const user = await UserModel.findOne({ accessToken }).select('name userRole mobile email profilePicture language accessToken refreshToken');
+    const user = await UserModel.findOne({ accessToken }).select('name userRole address mobile email profilePicture language accessToken refreshToken');
 
     if (!user || !user.refreshToken) {
       throw new ApiError(403, 'Refresh token not found');
@@ -171,7 +171,6 @@ const login = async (req: Request, res: Response) => {
     throw new ApiError(404, 'User not found');
   }
 
-  console.log("user", user?.password, password);
 
   // Ensure that you have a validatePassword method in UserModel
   const passwordIsValid = await UserModel.validatePassword(user.password, password);

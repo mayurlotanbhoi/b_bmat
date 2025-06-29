@@ -1,8 +1,6 @@
 import { Request, Response } from 'express';
-import jwt from 'jsonwebtoken';
 const { sign, verify } = jwt;
-import dotenv from 'dotenv';
-import { OAuth2Client, TokenPayload } from 'google-auth-library'; // Import Google OAuth2 Client
+import jwt from 'jsonwebtoken';
 import { ApiResponse } from '../middleware/ApiResponse.js'; // Assuming this is in your middleware folder
 import { UserModel } from '../models/user.model.js'; // Make sure this path is correct
 import { ApiError } from '../middleware/ApiError.js';
@@ -16,7 +14,7 @@ export const getUser = async (req: CustomRequest, res: Response) => {
     try {
         // Google OAuth2 token verification logic
 
-        const user = await UserModel.findById(_id).select('name userRole mobile email profilePicture language');
+        const user = await UserModel.findById(_id).select('name userRole address  mobile email profilePicture language');
         if (!user) {
             throw new ApiError(404, 'User not found');
         }
