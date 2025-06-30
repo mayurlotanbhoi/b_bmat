@@ -37,6 +37,7 @@ export const updateUser = asyncHandler(async (req: CustomRequest, res: Response)
         language,
         mobile,
         address,
+        name,
         compressedProfilePicture,
     } = req.body;
 
@@ -45,6 +46,7 @@ export const updateUser = asyncHandler(async (req: CustomRequest, res: Response)
         language,
         mobile,
         address,
+        name
     };
 
     // Set compressed profile picture if provided
