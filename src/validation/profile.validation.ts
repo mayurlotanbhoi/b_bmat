@@ -28,7 +28,7 @@ const profileValidationSchema = yup.object({
             .matches(nameRegex, "Only letters and spaces allowed"),
         gender: yup
             .string()
-            .oneOf(["Male", "Female", "Other"], "Invalid gender")
+            .oneOf(["male", "female", "other"], "Invalid gender")
             .required("Gender is required"),
         dateOfBirth: yup.date().required("Date of birth is required"),
         height: yup.string().nullable(),
@@ -38,7 +38,7 @@ const profileValidationSchema = yup.object({
         disability: yup.string().nullable(),
         maritalStatus: yup
             .string()
-            .oneOf(["Unmarried", "Married", "Divorced", "Widowed"], "Invalid marital status")
+            .oneOf(["unmarried", "married", "divorced", "widowed"], "Invalid marital status")
             .required("Marital status is required"),
         children: yup.string().nullable(),
     }),
