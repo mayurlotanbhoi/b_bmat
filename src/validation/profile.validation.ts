@@ -38,7 +38,7 @@ const profileValidationSchema = yup.object({
         disability: yup.string().nullable(),
         maritalStatus: yup
             .string()
-            .oneOf(["unmarried", "married", "divorced", "widowed"], "Invalid marital status")
+            .oneOf(["unmarried", "divorced", "widow", "widower", "separated", "remarriage"], "Invalid marital status")
             .required("Marital status is required"),
         children: yup.string().nullable(),
     }),

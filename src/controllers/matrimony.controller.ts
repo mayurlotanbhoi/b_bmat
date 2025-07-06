@@ -10,6 +10,7 @@ import UserModel from '../models/user.model.js';
 import { sendNotification } from '../routes/notifications.js';
 import stringSimilarity from 'string-similarity';
 import { notificationService } from '../services/index.js';
+import deepMerge from '../utils/deepMerge.js';
 interface CustomRequest extends Request {
     loginUser?: any; // or define the type of loginUser
 }
@@ -221,54 +222,50 @@ export const updateProfile = asyncHandler(async (req: CustomRequest, res: Respon
     delete profile?.compressedImages;
     delete profile?.compressedVerificationImage;
 
-    console.log('profile.profilePhotos', profile.profilePhotos);
+    console.log('profile?.contactDetails', profile?.contactDetails);
+    console.log('existingProfile.contactDetails', existingProfile.contactDetails);
+    const mergedContactDetails = {
+        mobileNo: profile?.contactDetails?.mobileNo ?? existingProfile.contactDetails?.mobileNo,
+        whatsappNo: profile?.contactDetails?.whatsappNo ?? existingProfile.contactDetails?.whatsappNo,
+        email: profile?.contactDetails?.email ?? existingProfile.contactDetails?.email,
 
+        presentAddress: {
+            area: profile?.contactDetails?.presentAddress?.area ?? existingProfile.contactDetails?.presentAddress?.area,
+            city: profile?.contactDetails?.presentAddress?.city ?? existingProfile.contactDetails?.presentAddress?.city,
+            state: profile?.contactDetails?.presentAddress?.state ?? existingProfile.contactDetails?.presentAddress?.state,
+            pinCode: profile?.contactDetails?.presentAddress?.pinCode ?? existingProfile.contactDetails?.presentAddress?.pinCode,
+            country: profile?.contactDetails?.presentAddress?.country ?? existingProfile.contactDetails?.presentAddress?.country ?? "India",
+        },
+
+        permanentAddress: {
+            area: profile?.contactDetails?.permanentAddress?.area ?? existingProfile.contactDetails?.permanentAddress?.area,
+            city: profile?.contactDetails?.permanentAddress?.city ?? existingProfile.contactDetails?.permanentAddress?.city,
+            state: profile?.contactDetails?.permanentAddress?.state ?? existingProfile.contactDetails?.permanentAddress?.state,
+            pinCode: profile?.contactDetails?.permanentAddress?.pinCode ?? existingProfile.contactDetails?.permanentAddress?.pinCode,
+            country: profile?.contactDetails?.permanentAddress?.country ?? existingProfile.contactDetails?.permanentAddress?.country ?? "India",
+        },
+    };
     // ✅ Perform partial update
     const updatedProfile = await matrimonyProfileModel.findByIdAndUpdate(
         id,
         {
             $set: {
-                professionalDetails: {
-                    ...existingProfile.professionalDetails,
-                    ...profile?.professionalDetails,
-                },
-                personalDetails: {
-                    ...existingProfile.personalDetails,
-                    ...profile?.personalDetails,
-                },
-                religiousDetails: {
-                    ...existingProfile.religiousDetails,
-                    ...profile?.religiousDetails,
-                },
-                familyDetails: {
-                    ...existingProfile.familyDetails,
-                    ...profile?.familyDetails,
-                },
-                educationDetails: {
-                    ...existingProfile.educationDetails,
-                    ...profile?.educationDetails,
-                },
-                expectation: {
-                    ...existingProfile.expectation,
-                    ...profile?.expectation,
-                },
-                contactDetails: {
-                    ...existingProfile.contactDetails,
-                    ...profile?.contactDetails,
-                },
-                lifestyleDetails: {
-                    ...existingProfile.lifestyleDetails,
-                    ...profile?.lifestyleDetails,
-                },
-                profilePhotos: [
-                    ...profile?.profilePhotos || [],
-                ],
-                verificationImage: profile?.verificationImage || existingProfile?.verificationImage
-
+                professionalDetails: deepMerge(existingProfile.professionalDetails, profile?.professionalDetails),
+                personalDetails: deepMerge(existingProfile.personalDetails, profile?.personalDetails),
+                religiousDetails: deepMerge(existingProfile.religiousDetails, profile?.religiousDetails),
+                familyDetails: deepMerge(existingProfile.familyDetails, profile?.familyDetails),
+                educationDetails: deepMerge(existingProfile.educationDetails, profile?.educationDetails),
+                expectation: deepMerge(existingProfile.expectation, profile?.expectation),
+                contactDetails: mergedContactDetails, // ✅ use manually merged version
+                lifestyleDetails: deepMerge(existingProfile.lifestyleDetails, profile?.lifestyleDetails),
+                profilePhotos: profile?.profilePhotos || existingProfile.profilePhotos || [],
+                verificationImage: profile?.verificationImage || existingProfile?.verificationImage,
             },
         },
         { new: true }
     );
+
+
 
 
     res.status(200).json(new ApiResponse(200, updatedProfile, 'Profile updated successfully'));
