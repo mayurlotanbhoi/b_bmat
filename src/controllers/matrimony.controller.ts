@@ -287,7 +287,7 @@ export const getAllProfiles = asyncHandler(async (req: Request, res: Response) =
         page = 1,
         limit = 10,
         ...filters
-    } = req.query;
+    } = req.body;
 
     const currentPage = Number(page);
     const perPage = Number(limit);
@@ -308,6 +308,7 @@ export const getAllProfiles = asyncHandler(async (req: Request, res: Response) =
         income: 'professionalDetails.income',
         height: 'personalDetails.height',
         education: 'educationDetails.highestQualification',
+        jobType: 'professionalDetails.jobType',
         candidateTypes: 'candidateTypes'
     };
 
@@ -317,28 +318,69 @@ export const getAllProfiles = asyncHandler(async (req: Request, res: Response) =
         const rawValue = filters[key];
         if (!rawValue) continue;
 
+        // Special handling for ageRange
+        if (key === 'ageRange' && typeof rawValue === 'string' && rawValue.includes('-')) {
+            const [minAge, maxAge] = rawValue.split('-').map(Number);
+            if (!isNaN(minAge) && !isNaN(maxAge)) {
+                const today = new Date();
+                const minDOB = new Date(today.getFullYear() - maxAge, today.getMonth(), today.getDate());
+                const maxDOB = new Date(today.getFullYear() - minAge, today.getMonth(), today.getDate());
+                filter['personalDetails.dateOfBirth'] = { $gte: minDOB, $lte: maxDOB };
+            }
+            continue;
+        }
+
+        // Special handling for heightRange (string match, e.g. "5ft1in-5ft5in")
+        if (key === 'heightRange' && typeof rawValue === 'string' && rawValue.includes('-')) {
+            // Use regex to match height range string
+            filter['personalDetails.height'] = { $regex: rawValue, $options: 'i' };
+            continue;
+        }
+
+        // Special handling for array fields (education, occupation, jobType)
+        if ((key === 'education' || key === 'occupation' || key === 'jobType') && Array.isArray(rawValue)) {
+            if (rawValue.length > 0) {
+                filter[fieldMap[key]] = { $in: rawValue };
+            }
+            // If array is empty, skip adding filter for this field
+            continue;
+        }
         const value = Array.isArray(rawValue) ? rawValue : String(rawValue).trim();
         if (value === '') continue;
-
         if (key === 'candidateTypes') {
             const val = String(value).toLowerCase();
-            if (val === 'bride') filter['personalDetails.gender'] = 'Female';
-            else if (val === 'groom') filter['personalDetails.gender'] = 'Male';
-            else if (val === 'divorced') filter['personalDetails.maritalStatus'] = 'Divorced';
-            else if (val === 'widow') filter['personalDetails.maritalStatus'] = 'Widow';
+            if (val === 'bride') filter['personalDetails.gender'] = 'female';
+            else if (val === 'groom') filter['personalDetails.gender'] = 'male';
+            else if (val === 'divorced') filter['personalDetails.maritalStatus'] = 'divorced';
+            else if (val === 'widow') filter['personalDetails.maritalStatus'] = 'widow';
+        } else if (key === 'income' && !isNaN(Number(value))) {
+            // Only filter where income is numeric
+            filter.$expr = {
+                $and: [
+                    { $regexMatch: { input: "$professionalDetails.income", regex: "^[0-9]+(\\.[0-9]+)?$" } },
+                    { $gte: [ { $toDouble: "$professionalDetails.income" }, Number(value) ] }
+                ]
+            };
         } else if (fieldMap[key]) {
             if (Array.isArray(value)) {
-                filter[fieldMap[key]] = { $in: value };
+                if (value.length > 0) {
+                    filter[fieldMap[key]] = { $in: value };
+                }
+                // If array is empty, skip adding filter for this field
             } else {
                 filter[fieldMap[key]] = { $regex: value, $options: 'i' };
             }
         }
     }
 
+    console.log('Filter conditions:', filter);
+
     const [totalResults, profiles] = await Promise.all([
         matrimonyProfileModel.countDocuments(filter),
         matrimonyProfileModel.find(filter).skip(skip).limit(perPage).lean()
     ]);
+
+    // console.log('Total results:', profiles);
 
     const totalPages = Math.ceil(totalResults / perPage);
 

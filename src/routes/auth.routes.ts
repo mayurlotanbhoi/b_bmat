@@ -7,6 +7,7 @@ import { googleLogin, login, logout, refreshToken, register } from '../controlle
 
 const router = express.Router();
 
+
 router.post('/register', asyncHandler(register));
 router.post('/google-login', asyncHandler(googleLogin));
 router.post('/login', asyncHandler(login));

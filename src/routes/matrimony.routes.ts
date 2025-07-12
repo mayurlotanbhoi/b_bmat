@@ -10,7 +10,7 @@ const router = express.Router();
 router.get('/me', authMiddleware, getProfileByUserId);
 router.get('/match', authMiddleware, getSmartMatches);
 router.post('/create', authMiddleware, uploadAndCompressImages, createProfile);
-router.get('/filter', authMiddleware, getAllProfiles);
+router.post('/filter', authMiddleware, getAllProfiles);
 router.get('/search', authMiddleware, searchProfiles);
 router.get('/:id', authMiddleware, getProfileById);
 router.put('/update/:id', authMiddleware, uploadAndCompressImages, updateProfile);
