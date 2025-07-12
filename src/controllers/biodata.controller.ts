@@ -12,11 +12,9 @@ import { matrimonyProfileModel } from '../models/matrimony.model.js';
 export const shareBiodata = asyncHandler(async (req: CustomRequest, res: Response) => {
     const { toUserId, profileId } = req.body;
     const fromUserId = req.loginUser._id;
-
     if (!toUserId || !profileId) {
         throw new ApiError(400, 'Missing recipient user ID or profile ID');
     }
-
     // Get profile being shared
     const profileToShare = await matrimonyProfileModel.findById(profileId);
     if (!profileToShare) throw new ApiError(404, 'Profile to share not found');
@@ -46,7 +44,6 @@ export const shareBiodata = asyncHandler(async (req: CustomRequest, res: Respons
             imageUrl: senderProfile.profilePhotos?.[0] || '',
         });
     }
-
     res.status(201).json(new ApiResponse(201, shared, 'Biodata shared successfully'));
 });
 
