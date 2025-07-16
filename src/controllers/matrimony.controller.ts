@@ -15,7 +15,7 @@ interface CustomRequest extends Request {
     loginUser?: any; // or define the type of loginUser
 }
 
-// ✅ Create Profile
+// Create Profile
 export const createProfile = asyncHandler(async (req: CustomRequest, res: Response) => {
     // const profile = req.body;
     const profile = parseDotNotation(req.body);
@@ -92,7 +92,7 @@ export const createProfile = asyncHandler(async (req: CustomRequest, res: Respon
         .json(new ApiResponse(201, newProfile, 'Profile registered successfully'));
 });
 
-// ✅ Get Profile by ID
+//  Get Profile by ID
 export const getProfileById = asyncHandler(async (req: Request, res: Response) => {
     const profile = await matrimonyProfileModel.findById(req.params.id);
     if (!profile) {

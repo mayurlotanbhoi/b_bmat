@@ -1,0 +1,1 @@
+export { getMatrimonyProfiles } from './userMatri.coltrollesr.js'

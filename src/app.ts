@@ -65,6 +65,9 @@ import user from "./routes/user.routes.js";
 import biodata from "./routes/biodata.routes.js";
 import locatation from "./routes/location.routes.js";
 
+// admin
+import adminMatrimony from "./routes/admin/usermatri.routes.js";
+
 
 
 app.use('/api/v1/notifications', notificationRoutes);
@@ -75,11 +78,18 @@ app.use('/api/v1/biodata', biodata)
 app.use('/api/v1/user', user);
 
 
+// admin admin
+
+app.use('/api/v1/admin', adminMatrimony);
 
 
 
 // Global error handler (keep it last)
 app.use(errorHandler);
+
+app.get('/health', async (req, res) => {
+  res.json({ success: true, message: 'Route is healthy' });
+})
 
 app.get('/', async (req, res) => {
   res.json({ success: true, message: 'Route not found' });
