@@ -1,0 +1,1 @@
+export { default as paginateQuery } from './pagination.js';

@@ -4,7 +4,6 @@ import AutoIncrementFactory from 'mongoose-sequence';
 import { calculateProfileCompletion } from '../utils/calculateProfileCompletion.utils.js';
 import { Address, IProfile, Sibling } from '../types/profile.types.js';
 import { BLOOD_GROUPS, GENDER, JOB_TYPES, MANGALIK_STATUS, MARITAL_STATUSES } from '../constants/comman.js';
-import { number } from 'yup';
 
 const AutoIncrement = AutoIncrementFactory(mongoose as any);
 
@@ -139,7 +138,7 @@ const profileSchema = new Schema<IProfile>({
     profileStatus: {
         type: String,
         enum: ['Active', 'Inactive', 'Pending', 'Suspended'],
-        default: 'Active'
+        default: 'Pending'
     },
     lat: { type: Number },
     lon: { type: Number },

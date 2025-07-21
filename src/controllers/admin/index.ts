@@ -1,1 +1,1 @@
-export { getMatrimonyProfiles } from './userMatri.coltrollesr.js'
+export * from './userMatri.coltrollesr.js'

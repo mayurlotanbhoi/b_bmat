@@ -105,9 +105,8 @@ export interface IProfile extends Document {
 
     verificationImage?: string;
     profilePhotos: string[];
-
     isVerified: boolean;
-    profileStatus: 'Active' | 'Inactive' | 'Suspended';
+    profileStatus: 'Active' | 'Inactive' | 'Suspended' | 'Pending';
     organization: string;
     organizationId: Types.ObjectId;
     userId: Types.ObjectId;
