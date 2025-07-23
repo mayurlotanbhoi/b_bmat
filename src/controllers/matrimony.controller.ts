@@ -282,12 +282,14 @@ export const deleteProfile = asyncHandler(async (req: Request, res: Response) =>
 });
 
 // ✅ Get All Profiles
-export const getAllProfiles = asyncHandler(async (req: Request, res: Response) => {
+export const getAllProfiles = asyncHandler(async (req: CustomRequest, res: Response) => {
     const {
         page = 1,
         limit = 10,
         ...filters
     } = req.body;
+
+    const { longitude  , latitude } = req.loginUser?.coordinates || {};
 
     const currentPage = Number(page);
     const perPage = Number(limit);
@@ -351,8 +353,19 @@ export const getAllProfiles = asyncHandler(async (req: Request, res: Response) =
             const val = String(value).toLowerCase();
             if (val === 'bride') filter['personalDetails.gender'] = 'female';
             else if (val === 'groom') filter['personalDetails.gender'] = 'male';
-            else if (val === 'divorced') filter['personalDetails.maritalStatus'] = 'divorced';
+            else if (val === 'divorcee') filter['personalDetails.maritalStatus'] = 'divorced';
             else if (val === 'widow') filter['personalDetails.maritalStatus'] = 'widow';
+            else if (val === 'nearby' && latitude && longitude) {
+                const radiusInDegrees = 1; // ~55 km; adjust as needed
+
+                filter['lat'] = { $gte: latitude - radiusInDegrees, $lte: latitude + radiusInDegrees };
+                filter['lon'] = { $gte: longitude - radiusInDegrees, $lte: longitude + radiusInDegrees };
+            }
+            else if (val === '10-12') {
+                filter['educationDetails.highestQualification'] = {
+                    $in: ["Below 10th", "10th Pass", "12th Pass", "Diploma", "ITI"]
+                };
+            }
         } else if (key === 'income' && !isNaN(Number(value))) {
             // Only filter where income is numeric
             filter.$expr = {
