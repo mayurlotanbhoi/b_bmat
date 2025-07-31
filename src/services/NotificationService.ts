@@ -64,6 +64,9 @@ class NotificationService {
         };
 
         const android = {
+            headers: {
+                Urgency: 'high',
+            },
             ttl: ttlSeconds * 1000,
             notification: {
                 clickAction: clickActionUrl,

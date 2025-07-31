@@ -11,11 +11,22 @@ import admin from "firebase-admin";
 import { errorHandler } from "./middleware/errorHandler.js";
 
 const app = express();
+// __dirname equivalent in ESM
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
 
 // Middleware setup (correct order)
 app.use(express.json({ limit: '16kb' })); // ✅ Parse JSON body correctly
 app.use(express.urlencoded({ extended: true }));
-app.use(express.static('public'));
+app.use(
+  '/uploads',
+  express.static(path.join(__dirname, '../public/uploads'), {
+    setHeaders: (res) => {
+      res.setHeader('Access-Control-Allow-Origin', 'http://localhost:5173');
+      res.setHeader('Access-Control-Allow-Credentials', 'false'); // For anonymous
+    },
+  })
+);
 app.use(cookieParser('yourSecretKey'));
 app.use(cors({
   origin: ['https://bmat.onrender.com', 'http://localhost:5173','http://localhost:5174', 'https://5173-mayurlotanbhoi-fbmat-uaiurd3o9t9.ws-us120.gitpod.io'],
@@ -26,20 +37,12 @@ app.use(morgan(':method :url :status :res[content-length] - :response-time ms'))
 dotenv.config();
 
 
-// __dirname equivalent in ESM
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = path.dirname(__filename);
+
 
 // Serve static files from /public
 // app.use('public', express.static(path.join(__dirname, '../uploads')));
 
-app.use('/public', express.static(path.join(__dirname, '../uploads'), {
-  setHeaders: (res, filePath) => {
-    // ✅ Serve CORS headers for static images
-    res.setHeader('Access-Control-Allow-Origin', ['http://localhost:5173','http://localhost:5174']); // Or the frontend domain you're using
-    res.setHeader('Access-Control-Allow-Credentials', 'true');
-  },
-}));
+
 
 
 const serviceAccount = JSON.parse(process.env.FIREBASE_SERVICE_ACCOUNT_JSON!);

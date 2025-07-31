@@ -7,8 +7,6 @@ import { OAuth2Client, TokenPayload } from 'google-auth-library'; // Import Goog
 import { ApiResponse } from '../middleware/ApiResponse.js'; // Assuming this is in your middleware folder
 import { UserModel } from '../models/user.model.js'; // Make sure this path is correct
 import { ApiError } from '../middleware/ApiError.js';
-import { asyncHandler } from '../middleware/asyncHandler.js';
-import bcrypt from 'bcryptjs';
 import { notificationService } from '../services/index.js';
 
 dotenv.config();
