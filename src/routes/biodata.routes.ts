@@ -11,7 +11,7 @@ router.get('/shared', authMiddleware, getSharedBiodatas);
 router.get('/view/:id', authMiddleware, markBiodataViewed);
 
 // keep dynamic route at the bottom
-router.get('/:id', authMiddleware, getBioData);
+router.get('/:id', getBioData);
 router.post('/share', authMiddleware, shareBiodata);
 
 export default router;

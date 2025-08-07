@@ -17,7 +17,7 @@ export interface NotificationPayload {
 class NotificationService {
     private defaultTitle = '🔔 New Notification';
     private defaultBody = 'You have a new message.';
-    private defaultUrl = '/';
+    private defaultUrl = 'https://bmat.onrender.com/';
 
     private buildBaseMessage(payload: NotificationPayload) {
         const {
@@ -32,57 +32,99 @@ class NotificationService {
 
         const clickActionUrl = click_action || url;
 
+        // Base notification object
         const notification = {
             title,
             body,
-            image: imageUrl || undefined,
+            ...(imageUrl && { image: imageUrl }),
         };
 
+        // Data payload - matching your service worker expectations
         const dataPayload = {
             ...data,
-            title,
-            body,
-            imageUrl,
-            url,
-            click_action: clickActionUrl,
+            title: title.toString(),
+            body: body.toString(),
+            icon: 'http://localhost:5000/uploads/images/compressed/android-chrome-192x192.png', // Match your SW default
+            badge: 'http://localhost:5000/uploads/images/compressed/android-chrome-192x192.png',   // Match your SW default
+            image: imageUrl.toString(),
+            url: clickActionUrl.toString(),
+            click_action: clickActionUrl.toString(),
         };
 
+        // PWA/Web specific configuration - matching your service worker
         const webpush = {
             headers: {
-                Urgency: 'high',
+                'Urgency': 'high',
+                'TTL': ttlSeconds.toString(),
             },
             notification: {
                 title,
                 body,
-                icon: imageUrl || '/logo192.png',
-                image: imageUrl || undefined,
+                icon: '/icons/icon-192x192.png', // Match your SW
+                badge: '/icons/badge-icon.png',   // Match your SW
+                ...(imageUrl && { image: imageUrl }),
                 click_action: clickActionUrl,
+                requireInteraction: false,
+                silent: false,
+                tag: 'default',
             },
             fcmOptions: {
-                link: clickActionUrl, // <-- this is critical for web (PWA)
+                link: clickActionUrl,
             },
+            data: dataPayload, // This is key - data goes here for PWA
         };
 
+        // Android specific configuration
         const android = {
-            headers: {
-                Urgency: 'high',
-            },
             ttl: ttlSeconds * 1000,
+            priority: 'high' as const,
             notification: {
+                title,
+                body,
                 clickAction: clickActionUrl,
-                icon: imageUrl || undefined,
+                ...(imageUrl && {
+                    icon: imageUrl,
+                    imageUrl: imageUrl
+                }),
+                defaultSound: true,
+                defaultVibrateTimings: true,
+                defaultLightSettings: true,
+            },
+            data: dataPayload,
+        };
+
+        // iOS/APNS specific configuration
+        const apns = {
+            headers: {
+                'apns-priority': '10',
+                'apns-push-type': 'alert',
+            },
+            payload: {
+                aps: {
+                    alert: {
+                        title,
+                        body,
+                    },
+                    sound: 'default',
+                    badge: 1,
+                    'content-available': 1,
+                    'mutable-content': 1,
+                },
+                ...dataPayload,
+            },
+            fcmOptions: {
                 imageUrl: imageUrl || undefined,
             },
         };
 
         return {
-            notification, // <-- this ensures background delivery
-            data: dataPayload,
+            // Remove top-level notification for PWA (let service worker handle it)
+            data: dataPayload, // Data is primary for PWA
             webpush,
             android,
+            apns,
         };
     }
-
 
     async send(payload: NotificationPayload) {
         const baseMessage = this.buildBaseMessage(payload);
@@ -128,6 +170,7 @@ class NotificationService {
                     }
                 });
 
+                // Clean up invalid tokens
                 if (invalidTokens.length > 0) {
                     try {
                         await UserModel.updateMany(
