@@ -174,10 +174,11 @@ export const getProfileByUserId = asyncHandler(async (req: CustomRequest, res: R
 export const updateProfile = asyncHandler(async (req: CustomRequest, res: Response) => {
     console.log("Raw incoming data:", req.body);
 
+    
+
     // Parse nested fields from dot-notation
     const profile = parseDotNotation(req.body);
 
-    console.log("profile", profile)
     const { _id } = req.loginUser;
     const { id } = req.params;
 

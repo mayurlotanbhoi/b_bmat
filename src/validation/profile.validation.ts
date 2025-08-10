@@ -62,8 +62,7 @@ const profileValidationSchema = yup.object({
         email: yup
             .string()
             .email("Invalid email address")
-            .matches(emailRegex, "Invalid email address")
-            .required("Email is required"),
+            .matches(emailRegex, "Invalid email address"),
         presentAddress: addressSchema.required("Present address is required"),
         permanentAddress: addressSchema.required("Permanent address is required"),
     }),
