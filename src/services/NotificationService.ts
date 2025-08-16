@@ -60,6 +60,7 @@ class NotificationService {
             notification: {
                 title,
                 body,
+                sound: 'default',
                 icon: '/icons/icon-192x192.png', // Match your SW
                 badge: '/icons/badge-icon.png',   // Match your SW
                 ...(imageUrl && { image: imageUrl }),

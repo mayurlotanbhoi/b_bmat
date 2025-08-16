@@ -30,8 +30,8 @@ export const sendProfileVeiwedNotification = asyncHandler(async (req: CustomRequ
             tokens: ownerUser.fcmTokens,
             title: `👀 ${viewerProfile.personalDetails?.fullName || 'a user'} viewed your biodata!`,
             body: `Your profile was viewed by ${viewerProfile.personalDetails?.fullName || 'a user'}.`,
-            url: `/matrimony/view-profile/${viewerProfile._id}`,
-            click_action: `/matrimony/view-profile/${viewerProfile._id}`,
+            url: `/view-profile/${viewerProfile._id}`,
+            click_action: `/view-profile/${viewerProfile._id}`,
             imageUrl: viewerProfile.profilePhotos?.[0] || '',
         });
     }

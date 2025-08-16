@@ -72,8 +72,8 @@ export const createProfile = asyncHandler(async (req: CustomRequest, res: Respon
             tokens,
             title: 'New Profile Alert!',
             body: 'A new profile matching your preferences has been added.',
-            url: '/matrimony/search',
-            click_action: '/matrimony/search',
+            url: `/view-profile/${profile._id}`,
+            click_action: `/view-profile/${profile._id}`,
             imageUrl: profile?.profilePhotos[0], // Optional: Add image path if you want a thumbnail
         }
         await notificationService.send(payload);

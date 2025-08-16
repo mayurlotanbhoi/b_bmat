@@ -39,10 +39,12 @@ export const shareBiodata = asyncHandler(async (req: CustomRequest, res: Respons
             tokens: receiver.fcmTokens,
             title: '📩 New Biodata Received!',
             body: `You received a profile from ${senderProfile.personalDetails?.fullName || 'a user'}.`,
-            url: `/matrimony/view-profile/${profileToShare._id}`,
-            click_action: `/matrimony/view-profile/${profileToShare._id}`,
+            url: `/scan-qr-view-profile/${profileToShare._id}`,
+            click_action: `/scan-qr-view-profile/${profileToShare._id}`,
             imageUrl: senderProfile.profilePhotos?.[0] || '',
         });
+
+        // https://bmat.onrender.com/scan-qr-view-profile
     }
     res.status(201).json(new ApiResponse(201, shared, 'Biodata shared successfully'));
 });
@@ -91,8 +93,8 @@ export const markBiodataViewed = asyncHandler(async (req: CustomRequest, res: Re
             tokens: ownerUser.fcmTokens,
             title: '👀 Someone viewed your biodata!',
             body: `Your profile was viewed by ${viewerProfile.personalDetails?.fullName || 'a user'}.`,
-            url: `/matrimony/view-profile/${viewerProfile._id}`,
-            click_action: `/matrimony/view-profile/${viewerProfile._id}`,
+            url: `/scan-qr-view-profile/${viewerProfile._id}`,
+            click_action: `/scan-qr-view-profilee/${viewerProfile._id}`,
             imageUrl: viewerProfile.profilePhotos?.[0] || '',
         });
     }

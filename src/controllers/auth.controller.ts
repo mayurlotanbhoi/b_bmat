@@ -188,8 +188,8 @@ const login = async (req: Request, res: Response) => {
     tokens: newUser.fcmTokens, // Array of FCM tokens (e.g. [user.fcmToken])
     title: '✅ Login Successful!',
     body: 'You have successfully logged into your account.',
-    url: '/dashboard', // Redirect to your dashboard or home page
-    click_action: '/dashboard',
+    url: '/', // Redirect to your dashboard or home page
+    click_action: '/',
     imageUrl: 'https://cdn.wallpapersafari.com/31/77/634LSi.jpg', // Optional: show a login-related image if available
   };
   await notificationService.send(payload);

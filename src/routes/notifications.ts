@@ -197,7 +197,6 @@ router.post('/send-notification', asyncHandler(async (req: Request<{}, {}, Notif
     }
 
     const result = await notificationService.send({ ...payload, tokens });
-    console.log("✅ Notification result:", JSON.stringify(result, null, 2));
 
     res.json({
       success: result.success,
