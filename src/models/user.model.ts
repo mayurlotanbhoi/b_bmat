@@ -63,6 +63,8 @@ export interface IUser extends Document {
 // =======================
 interface IUserModel extends Model<IUser> {
   findUserByEmail(email: string): Promise<IUser | null>;
+  isUserExists(phoneOrEmail: string): Promise<IUser | null>;
+  findUserByPhone(phone: string): Promise<IUser | null>;
   createUserWithPhone(phone: string, password: string,): Promise<IUser>;
   createUserWithGoogle(email: string, name: string, profilePicture?: string): Promise<IUser>;
   validatePassword(storedPassword: string, inputPassword: string): Promise<boolean>;
@@ -173,6 +175,19 @@ userSchema.statics.updateRefreshAndAccessToken = async function (
 // =======================
 userSchema.statics.findUserByEmail = async function (email: string) {
   return this.findOne({ email });
+};
+
+userSchema.statics.isUserExists = async function (phoneOrEmail) {
+  return this.findOne({
+    $or: [
+      { mobile: phoneOrEmail },
+      { email: phoneOrEmail }
+    ]
+  });
+};
+
+userSchema.statics.findUserByPhone = async function (phone: string) {
+  return this.findOne({ mobile: phone });
 };
 
 userSchema.statics.getAllfcmTokens = async function () {

@@ -138,7 +138,9 @@ const register = async (req: Request, res: Response) => {
   }
 
   // Check if user already exists
-  const existingUser = await UserModel.findUserByEmail(mobile);
+  const existingUser = await UserModel.isUserExists(mobile);
+  console.log(existingUser, 'existingUser');
+
   if (existingUser) {
     return res.status(409).json(
       new ApiResponse(409, null, 'User already exists')
@@ -149,10 +151,42 @@ const register = async (req: Request, res: Response) => {
 
 
   // Create and save new user
-  const newUser = await UserModel.createUserWithPhone(mobile, password);
+  const user = await UserModel.createUserWithPhone(mobile, password);
+
+  const userId = user._id;
+  const accessToken = generateToken(userId, process.env.JWT_SECRET!, process.env.JWT_ACCESS_EXPIRATION!);
+  const refreshToken = generateToken(userId, process.env.JWT_REFRESH_SECRET!, process.env.JWT_REFRESH_EXPIRATION!);
+
+  const newUser = await UserModel.updateRefreshAndAccessToken(userId, refreshToken, accessToken);
+
+  console.log('newUser?.fcmTokens', newUser?.fcmTokens)
+
+
+
+  const payload = {
+    tokens: newUser?.fcmTokens, // Array of FCM tokens (e.g. [user.fcmToken])
+    title: '✅ Registration Successful!',
+    body: 'You have successfully registered your account.',
+    url: '/', // Redirect to your dashboard or home page
+    click_action: '/',
+    imageUrl: 'https://cdn.wallpapersafari.com/31/77/634LSi.jpg', // Optional: show a login-related image if available
+  };
+  await notificationService.send(payload);
+
+  res.cookie(process.env.COOKIE_NAME!, accessToken, {
+    httpOnly: true,
+    secure: process.env.NODE_ENV === 'production', // must be true on HTTPS
+    sameSite: 'lax', // <--- REQUIRED for cross-site cookie sending
+    maxAge: Number(process.env.COOKIE_MAX_AGE),
+    path: process.env.COOKIE_PATH!,
+  });
+
+
+
+  // res.status(200).json(new ApiResponse(200, { user: newUser, accessToken }, 'Login successful'));
 
   return res.status(201).json(
-    new ApiResponse(201, newUser, 'User registered successfully')
+    new ApiResponse(201, { user: newUser, accessToken }, 'User registered successfully')
   );
 
 };
@@ -185,7 +219,7 @@ const login = async (req: Request, res: Response) => {
   const newUser = await UserModel.updateRefreshAndAccessToken(userId, refreshToken, accessToken);
 
   const payload = {
-    tokens: newUser.fcmTokens, // Array of FCM tokens (e.g. [user.fcmToken])
+    tokens: newUser?.fcmTokens, // Array of FCM tokens (e.g. [user.fcmToken])
     title: '✅ Login Successful!',
     body: 'You have successfully logged into your account.',
     url: '/', // Redirect to your dashboard or home page
