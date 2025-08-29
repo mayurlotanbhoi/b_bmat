@@ -1,0 +1,75 @@
+# Node.js dependencies
+node_modules/
+npm-debug.log
+yarn-debug.log
+
+# TypeScript build outputs (if any)
+dist/
+build/
+out/
+
+# IDE/editor files
+.idea/
+.vscode/
+*.swp
+*.swo
+
+# Version control
+.git/
+.gitignore
+.svn/
+.hg/
+
+# Environment and secrets
+# .env*
+# *.env
+*.pem
+*.key
+*.crt
+config.local.*
+*.local.yml
+
+# Documentation
+README*
+docs/
+*.md
+
+# Temporary and local files
+tmp/
+temp/
+*.tmp
+.local/
+local/
+
+# Test and debug artifacts
+test/
+tests/
+debug/
+*.log
+
+# Python (if any, for completeness)
+__pycache__/
+*.pyc
+*.pyo
+.pytest_cache/
+.coverage
+
+# Go (if any, for completeness)
+/vendor/
+*.test
+.go-cache/
+
+# Java (if any, for completeness)
+target/
+*.class
+.gradle/
+
+# Docker files (if not needed in build context)
+Dockerfile*
+docker-compose*
+
+# Project-specific uploads (if not needed in build context)
+public/uploads/
+
+# Exclude lock files from ignore (explicitly allow)
+!package-lock.json

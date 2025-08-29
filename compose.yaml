@@ -1,0 +1,19 @@
+services:
+  ts-app:
+    build:
+      context: .
+      dockerfile: ./Dockerfile
+    container_name: ts-app
+    restart: unless-stopped
+    init: true
+    env_file: .env  # Uncomment if .env file exists
+    ports:
+      - "5000:5000"  # Exposed by Dockerfile
+    networks:
+      - appnet
+    # If you add a database or other services, add 'depends_on' here
+
+# Define a custom network for service communication
+networks:
+  appnet:
+    driver: bridge

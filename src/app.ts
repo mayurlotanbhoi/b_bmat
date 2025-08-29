@@ -43,12 +43,26 @@ dotenv.config();
 // app.use('public', express.static(path.join(__dirname, '../uploads')));
 
 
+console.log("process.env.COOKIE_MAX_AGE", process.env.COOKIE_MAX_AGE);
 
 
-const serviceAccount = JSON.parse(process.env.FIREBASE_SERVICE_ACCOUNT_JSON!);
+const serviceAccount = {
+  type: "service_account",
+  project_id: process.env.FIREBASE_PROJECT_ID,
+  private_key_id: process.env.FIREBASE_PRIVATE_KEY_ID,
+  private_key: process.env.FIREBASE_PRIVATE_KEY?.replace(/\\n/g, "\n"),
+  client_email: process.env.FIREBASE_CLIENT_EMAIL,
+  client_id: process.env.FIREBASE_CLIENT_ID,
+  auth_uri: process.env.FIREBASE_AUTH_URI,
+  token_uri: process.env.FIREBASE_TOKEN_URI,
+  auth_provider_x509_cert_url: process.env.FIREBASE_AUTH_PROVIDER_X509_CERT_URL,
+  client_x509_cert_url: process.env.FIREBASE_CLIENT_X509_CERT_URL,
+};
+
+console.log("Firebase service account initialized", serviceAccount);
 
 admin.initializeApp({
-  credential: admin.credential.cert(serviceAccount),
+  credential: admin.credential.cert(serviceAccount as admin.ServiceAccount),
 });
 
 process.on('unhandledRejection', (reason, promise) => {
@@ -88,11 +102,11 @@ app.use('/api/v1/admin', adminMatrimony);
 app.use(errorHandler);
 
 app.get('/health', async (req, res) => {
-  res.json({ success: true, message: 'Route is healthy' });
+  res.status(200).json({ success: true, message: 'Route is healthy' });
 })
 
 app.get('/', async (req, res) => {
-  res.json({ success: true, message: 'Route not found' });
+  res.status(404).json({ success: false, message: 'Route not found' });
 })
 
 export default app;

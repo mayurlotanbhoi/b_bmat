@@ -23,7 +23,7 @@ export const getLocation = asyncHandler(async (req: CustomRequest, res) => {
                 `https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lon}`,
                 {
                     headers: {
-                        "User-Agent": "VaishyaMatrimony/1.0 (support@vaishyaparinay.com)",
+                        "User-Agent": "bhoi matrimony/1.0 (mayurbhoi200@gmail.com)",
                         Accept: "application/json",
                     },
                 }
