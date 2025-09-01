@@ -44,8 +44,8 @@ class NotificationService {
             ...data,
             title: title.toString(),
             body: body.toString(),
-            icon: 'http://api.inviteqr.in/uploads/images/compressed/android-chrome-192x192.png', // Match your SW default
-            badge: 'http://api.inviteqr.in/uploads/images/compressed/android-chrome-192x192.png',   // Match your SW default
+            icon: 'https://api.inviteqr.in/uploads/images/compressed/android-chrome-192x192.png', // Match your SW default
+            badge: 'https://api.inviteqr.in/uploads/images/compressed/android-chrome-192x192.png',   // Match your SW default
             image: imageUrl.toString(),
             url: clickActionUrl.toString(),
             click_action: clickActionUrl.toString(),

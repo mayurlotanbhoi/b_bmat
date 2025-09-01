@@ -69,7 +69,7 @@ export const uploadAndCompressImages = (req: Request, res: Response, next: NextF
 
         try {
             const files = req.files as Record<string, Express.Multer.File[]> || {};
-            const domain = process.env.DOMAIN_NAME || 'http://api.inviteqr.in';
+            const domain = process.env.DOMAIN_NAME || 'https://api.inviteqr.in';
 
             const images = files['images'] || [];
             const verificationImages = files['verificationImage'] || [];
