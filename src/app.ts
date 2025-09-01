@@ -29,7 +29,7 @@ app.use(
 );
 app.use(cookieParser('yourSecretKey'));
 app.use(cors({
-  origin: ['https://bmat.onrender.com', 'http://localhost:5173','http://localhost:5174', 'https://5173-mayurlotanbhoi-fbmat-uaiurd3o9t9.ws-us120.gitpod.io'],
+  origin: ['https://bmat.onrender.com','https://inviteqr.in', 'http://localhost:5173','http://localhost:5174', 'https://5173-mayurlotanbhoi-fbmat-uaiurd3o9t9.ws-us120.gitpod.io'],
   credentials: true
 }));
 app.use(morgan(':method :url :status :res[content-length] - :response-time ms'));
