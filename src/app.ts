@@ -1,5 +1,4 @@
 import express, { Request, Response } from "express";
-import bodyParser from "body-parser";
 import dotenv from 'dotenv';
 // import admin from "firebase-admin";
 import cors from 'cors'
@@ -7,6 +6,7 @@ import path from 'path';
 import morgan from "morgan";
 import { fileURLToPath } from 'url';
 import admin from "firebase-admin";
+import compression from "compression"; // ✅ Response compression
 // import serviceAccount from "./firebase/serviceAccountKey.json" with { type: "json" };
 import { errorHandler } from "./middleware/errorHandler.js";
 
@@ -15,18 +15,29 @@ const app = express();
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
+dotenv.config();
+
+
+
+// Compression: gzip responses (HTML, JSON, images if possible)
+app.use(compression());
+
 // Middleware setup (correct order)
 app.use(express.json({ limit: '16kb' })); // ✅ Parse JSON body correctly
 app.use(express.urlencoded({ extended: true }));
 app.use(
   '/uploads',
   express.static(path.join(__dirname, '../public/uploads'), {
-    setHeaders: (res) => {
+    setHeaders: (res, filePath) => {
+      if (filePath.match(/\.(jpg|jpeg|png|gif|webp|svg)$/)) {
+        res.setHeader("Cache-Control", "public, max-age=31536000"); // cache images 1 year
+      }
       res.setHeader('Access-Control-Allow-Origin', 'http://localhost:5173');
       res.setHeader('Access-Control-Allow-Credentials', 'false'); // For anonymous
     },
   })
 );
+
 app.use(cookieParser('yourSecretKey'));
 app.use(cors({
   origin: ['https://bmat.onrender.com','https://inviteqr.in', 'http://localhost:5173','http://localhost:5174', 'https://5173-mayurlotanbhoi-fbmat-uaiurd3o9t9.ws-us120.gitpod.io'],
@@ -34,7 +45,10 @@ app.use(cors({
 }));
 app.use(morgan(':method :url :status :res[content-length] - :response-time ms'));
 
-dotenv.config();
+
+
+// Security: set safe HTTP headers
+
 
 
 
