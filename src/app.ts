@@ -25,6 +25,7 @@ app.use(compression());
 // Middleware setup (correct order)
 app.use(express.json({ limit: '16kb' })); // ✅ Parse JSON body correctly
 app.use(express.urlencoded({ extended: true }));
+
 app.use(
   '/uploads',
   express.static(path.join(__dirname, '../public/uploads'), {
@@ -32,7 +33,7 @@ app.use(
       if (filePath.match(/\.(jpg|jpeg|png|gif|webp|svg)$/)) {
         res.setHeader("Cache-Control", "public, max-age=31536000"); // cache images 1 year
       }
-      res.setHeader('Access-Control-Allow-Origin', 'http://localhost:5173');
+      res.setHeader('Access-Control-Allow-Origin',  'https://inviteqr.in');
       res.setHeader('Access-Control-Allow-Credentials', 'false'); // For anonymous
     },
   })
