@@ -48,19 +48,47 @@ app.use(express.urlencoded({ extended: true }));
 //   }
 // }));
 
-
 app.use(
   '/uploads',
   express.static(path.join(__dirname, '../public/uploads'), {
     setHeaders: (res, filePath) => {
       if (filePath.match(/\.(jpg|jpeg|png|gif|webp|svg)$/)) {
-        res.setHeader("Cache-Control", "public, max-age=31536000"); // cache images 1 year
+        res.setHeader("Cache-Control", "public, max-age=31536000");
+        res.setHeader('Content-Disposition', 'attachment; filename="' + path.basename(filePath) + '"');
       }
-      res.setHeader('Access-Control-Allow-Origin', 'https://inviteqr.in');
-      res.setHeader('Access-Control-Allow-Credentials', 'false'); // For anonymous
+
+      const origin = res.req.headers.origin;
+      const allowedOrigins = [
+        'https://inviteqr.in',
+        'https://bmat.onrender.com',
+        'http://localhost:5173',
+        'http://localhost:5174'
+      ];
+      // @ts-ignore
+      if (allowedOrigins.includes(origin)) {
+        // @ts-ignore
+        res.setHeader('Access-Control-Allow-Origin', origin);
+      }
+      // Optionally remove this unless needed
+      // res.setHeader('Access-Control-Allow-Credentials', 'false');
     },
   })
 );
+
+
+
+// app.use(
+//   '/uploads',
+//   express.static(path.join(__dirname, '../public/uploads'), {
+//     setHeaders: (res, filePath) => {
+//       if (filePath.match(/\.(jpg|jpeg|png|gif|webp|svg)$/)) {
+//         res.setHeader("Cache-Control", "public, max-age=31536000"); // cache images 1 year
+//       }
+//       res.setHeader('Access-Control-Allow-Origin', 'https://inviteqr.in');
+//       res.setHeader('Access-Control-Allow-Credentials', 'false'); // For anonymous
+//     },
+//   })
+// );
 
 app.use(cookieParser('yourSecretKey'));
 app.use(cors({
