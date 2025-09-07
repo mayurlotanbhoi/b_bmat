@@ -23,45 +23,44 @@ dotenv.config();
 app.use(compression());
 
 // Middleware setup (correct order)
-app.use(express.json({ limit: '16kb' })); // ✅ Parse JSON body correctly
+app.use(express.json({ limit: '16kb' })); //Parse JSON body correctly
 app.use(express.urlencoded({ extended: true }));
 
 
-app.use('/uploads', express.static(path.join(__dirname, '../public/uploads'), {
-  setHeaders: (res, filePath) => {
-    if (filePath.match(/\.(jpg|jpeg|png|gif|webp|svg)$/)) {
-      res.setHeader("Cache-Control", "public, max-age=31536000");
-    }
-    const origin = res.req.headers.origin;
-    const allowedOrigins = [
-      'https://inviteqr.in',
-      'https://bmat.onrender.com',
-      'http://localhost:5173',
-      'http://localhost:5174'
-    ];
-    // @ts-ignore
-    if (allowedOrigins.includes(origin)) {
-      // @ts-ignore
-      res.setHeader('Access-Control-Allow-Origin', origin);
-    }
-    res.setHeader('Access-Control-Allow-Credentials', 'false');
-  }
-}));
+// app.use('/uploads', express.static(path.join(__dirname, '../public/uploads'), {
+//   setHeaders: (res, filePath) => {
+//     if (filePath.match(/\.(jpg|jpeg|png|gif|webp|svg)$/)) {
+//       res.setHeader("Cache-Control", "public, max-age=31536000");
+//     }
+//     const origin = res.req.headers.origin;
+//     const allowedOrigins = [
+//       'https://inviteqr.in',
+//       'https://bmat.onrender.com',
+//       'http://localhost:5173',
+//       'http://localhost:5174'
+//     ];
+//     // @ts-ignore
+//     if (allowedOrigins.includes(origin)) {
+//       // @ts-ignore
+//       res.setHeader('Access-Control-Allow-Origin', origin);
+//     }
+//     res.setHeader('Access-Control-Allow-Credentials', 'false');
+//   }
+// }));
 
 
-
-// app.use(
-//   '/uploads',
-//   express.static(path.join(__dirname, '../public/uploads'), {
-//     setHeaders: (res, filePath) => {
-//       if (filePath.match(/\.(jpg|jpeg|png|gif|webp|svg)$/)) {
-//         res.setHeader("Cache-Control", "public, max-age=31536000"); // cache images 1 year
-//       }
-//       res.setHeader('Access-Control-Allow-Origin', 'https://inviteqr.in');
-//       res.setHeader('Access-Control-Allow-Credentials', 'false'); // For anonymous
-//     },
-//   })
-// );
+app.use(
+  '/uploads',
+  express.static(path.join(__dirname, '../public/uploads'), {
+    setHeaders: (res, filePath) => {
+      if (filePath.match(/\.(jpg|jpeg|png|gif|webp|svg)$/)) {
+        res.setHeader("Cache-Control", "public, max-age=31536000"); // cache images 1 year
+      }
+      res.setHeader('Access-Control-Allow-Origin', 'https://inviteqr.in');
+      res.setHeader('Access-Control-Allow-Credentials', 'false'); // For anonymous
+    },
+  })
+);
 
 app.use(cookieParser('yourSecretKey'));
 app.use(cors({
@@ -74,15 +73,8 @@ app.use(morgan(':method :url :status :res[content-length] - :response-time ms'))
 
 // Security: set safe HTTP headers
 
-
-
-
-
 // Serve static files from /public
 // app.use('public', express.static(path.join(__dirname, '../uploads')));
-
-
-console.log("process.env.COOKIE_MAX_AGE", process.env.COOKIE_MAX_AGE);
 
 
 const serviceAccount = {
