@@ -117,6 +117,7 @@ export const searchProfiles = asyncHandler(async (req: Request, res: Response) =
     const isValidObjectId = Types.ObjectId.isValid(query);
 
     const matchConditions = [
+        { 'profileStatus': 'Active' },
         { 'personalDetails.fullName': regexQuery },
         { 'contactDetails.mobileNo': regexQuery },
         { 'contactDetails.whatsappNo': regexQuery },
@@ -132,7 +133,10 @@ export const searchProfiles = asyncHandler(async (req: Request, res: Response) =
         { 'professionalDetails.workingCity': regexQuery },
         { 'contactDetails.presentAddress.city': regexQuery },
         { 'contactDetails.presentAddress.area': regexQuery },
+
     ];
+
+    // matchConditions['profileStatus'] = 'Active';
 
     // if (isValidObjectId) {
     //     matchConditions.push(
@@ -317,6 +321,8 @@ export const getAllProfiles = asyncHandler(async (req: CustomRequest, res: Respo
 
     const filter: Record<string, any> = {};
 
+    filter['profileStatus'] = 'Active';
+
     for (const key in filters) {
         const rawValue = filters[key];
         if (!rawValue) continue;
@@ -426,6 +432,7 @@ export const getSmartMatches = asyncHandler(async (req: CustomRequest, res: Resp
     const allProfiles = await matrimonyProfileModel.find({
         _id: { $ne: user._id },
         'personalDetails.gender': genderToMatch,
+        'profileStatus': 'Active'
     });
 
     const getAge = (dob: any) => new Date().getFullYear() - new Date(dob).getFullYear();
