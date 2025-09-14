@@ -94,7 +94,8 @@ app.use(
 app.use(cookieParser('yourSecretKey'));
 app.use(cors({
   origin: ['https://bmat.onrender.com', 'https://bhoi.joodi.in', 'https://www.bhoi.joodi.in', 'http://localhost:5173','http://localhost:5174', 'https://5173-mayurlotanbhoi-fbmat-uaiurd3o9t9.ws-us120.gitpod.io'],
-  credentials: true
+  credentials: true,
+  optionsSuccessStatus: 200
 }));
 app.use(morgan(':method :url :status :res[content-length] - :response-time ms'));
 
