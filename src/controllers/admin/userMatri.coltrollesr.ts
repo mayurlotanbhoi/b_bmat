@@ -109,8 +109,8 @@ export const activateAndVerifyProfile = asyncHandler(async (req: Request, res: R
                 tokens: user.fcmTokens,
                 title: note.title,
                 body: note.body,
-                url: 'https://bmat.onrender.com',
-                click_action: 'https://bmat.onrender.com',
+                url: 'https://bhoi.joodi.in',
+                click_action: 'https://bhoi.joodi.in',
                 imageUrl: profile.profilePhotos?.[0] || '',
             };
             await notificationService.send(payload);

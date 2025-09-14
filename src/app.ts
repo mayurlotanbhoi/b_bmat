@@ -34,7 +34,7 @@ app.use(express.urlencoded({ extended: true }));
 //     }
 //     const origin = res.req.headers.origin;
 //     const allowedOrigins = [
-//       'https://inviteqr.in',
+//       'https://bhoi.joodi.in',
 //       'https://bmat.onrender.com',
 //       'http://localhost:5173',
 //       'http://localhost:5174'
@@ -59,7 +59,7 @@ app.use(
 
       const origin = res.req.headers.origin;
       const allowedOrigins = [
-        'https://inviteqr.in',
+        'https://bhoi.joodi.in',
         'https://bmat.onrender.com',
         'http://localhost:5173',
         'http://localhost:5174'
@@ -84,7 +84,7 @@ app.use(
 //       if (filePath.match(/\.(jpg|jpeg|png|gif|webp|svg)$/)) {
 //         res.setHeader("Cache-Control", "public, max-age=31536000"); // cache images 1 year
 //       }
-//       res.setHeader('Access-Control-Allow-Origin', 'https://inviteqr.in');
+//       res.setHeader('Access-Control-Allow-Origin', 'https://bhoi.joodi.in');
 //       res.setHeader('Access-Control-Allow-Credentials', 'false'); // For anonymous
 //     },
 //   })
@@ -92,7 +92,7 @@ app.use(
 
 app.use(cookieParser('yourSecretKey'));
 app.use(cors({
-  origin: ['https://bmat.onrender.com','https://inviteqr.in', 'http://localhost:5173','http://localhost:5174', 'https://5173-mayurlotanbhoi-fbmat-uaiurd3o9t9.ws-us120.gitpod.io'],
+  origin: ['https://bmat.onrender.com','https://bhoi.joodi.in', 'http://localhost:5173','http://localhost:5174', 'https://5173-mayurlotanbhoi-fbmat-uaiurd3o9t9.ws-us120.gitpod.io'],
   credentials: true
 }));
 app.use(morgan(':method :url :status :res[content-length] - :response-time ms'));

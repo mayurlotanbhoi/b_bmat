@@ -165,8 +165,8 @@ const register = async (req: Request, res: Response) => {
 
   const payload = {
     tokens: newUser?.fcmTokens, // Array of FCM tokens (e.g. [user.fcmToken])
-    title: '✅ Registration Successful!',
-    body: 'You have successfully registered your account.',
+    title: "✅ आपकी पंजीकरण प्रक्रिया सफल रही!",
+    body: 'आपने सफलतापूर्वक अपने खाते के लिए पंजीकरण कराया है।',
     url: '/', // Redirect to your dashboard or home page
     click_action: '/',
     imageUrl: 'https://cdn.wallpapersafari.com/31/77/634LSi.jpg', // Optional: show a login-related image if available
@@ -220,7 +220,7 @@ const login = async (req: Request, res: Response) => {
 
   const payload = {
     tokens: newUser?.fcmTokens, // Array of FCM tokens (e.g. [user.fcmToken])
-    title: '✅ Login Successful!',
+    title: 'Welcome back!  👋',
     body: 'You have successfully logged into your account.',
     url: '/', // Redirect to your dashboard or home page
     click_action: '/',
@@ -230,8 +230,8 @@ const login = async (req: Request, res: Response) => {
 
   res.cookie(process.env.COOKIE_NAME!, accessToken, {
     httpOnly: true,
-    secure: process.env.NODE_ENV === 'production', // must be true on HTTPS
-    sameSite: 'lax', // <--- REQUIRED for cross-site cookie sending
+    secure: process.env.NODE_ENV === 'production',
+    sameSite: 'lax', 
     maxAge: Number(process.env.COOKIE_MAX_AGE),
     path: process.env.COOKIE_PATH!,
   });

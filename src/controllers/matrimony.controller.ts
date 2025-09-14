@@ -70,8 +70,8 @@ export const createProfile = asyncHandler(async (req: CustomRequest, res: Respon
 
         const payload = {
             tokens,
-            title: 'New Profile Alert!',
-            body: 'A new profile matching your preferences has been added.',
+            title: '"📩 नया बायोडाटा प्राप्त हुआ!"',
+            body: 'आपको एक नया प्रोफ़ाइल मिला है जो आपकी प्राथमिकताओं से मेल खाता है।',
             url: `/view-profile/${profile._id}`,
             click_action: `/view-profile/${profile._id}`,
             imageUrl: profile?.profilePhotos[0], // Optional: Add image path if you want a thumbnail

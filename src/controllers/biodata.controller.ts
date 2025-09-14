@@ -37,8 +37,8 @@ export const shareBiodata = asyncHandler(async (req: CustomRequest, res: Respons
         await notificationService.send({
             //  @ts-ignore
             tokens: receiver.fcmTokens,
-            title: '📩 New Biodata Received!',
-            body: `You received a profile from ${senderProfile.personalDetails?.fullName || 'a user'}.`,
+            title: '"📩 नया बायोडाटा प्राप्त हुआ!"',
+            body: `आपको ${senderProfile.personalDetails?.fullName || 'एक उपयोगकर्ता'} से एक प्रोफ़ाइल मिली है।`,
             url: `/scan-qr-view-profile/${profileToShare._id}`,
             click_action: `/scan-qr-view-profile/${profileToShare._id}`,
             imageUrl: senderProfile.profilePhotos?.[0] || '',
@@ -91,8 +91,8 @@ export const markBiodataViewed = asyncHandler(async (req: CustomRequest, res: Re
     if (ownerUser?.fcmTokens?.length > 0) {
         await notificationService.send({
             tokens: ownerUser.fcmTokens,
-            title: '👀 Someone viewed your biodata!',
-            body: `Your profile was viewed by ${viewerProfile.personalDetails?.fullName || 'a user'}.`,
+            title: 'किसी ने आपका बायोडाटा देखा! 👀',
+            body: `आपका बायोडाटा ${viewerProfile.personalDetails?.fullName || 'एक उपयोगकर्ता'} द्वारा देखा गया।`,
             url: `/scan-qr-view-profile/${viewerProfile._id}`,
             click_action: `/scan-qr-view-profilee/${viewerProfile._id}`,
             imageUrl: viewerProfile.profilePhotos?.[0] || '',
