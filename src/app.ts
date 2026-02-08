@@ -6,6 +6,8 @@ import path from 'path';
 import morgan from "morgan";
 import { fileURLToPath } from 'url';
 import admin from "firebase-admin";
+import cookieParser from "cookie-parser";
+
 import compression from "compression"; // ✅ Response compression
 // import serviceAccount from "./firebase/serviceAccountKey.json" with { type: "json" };
 import { errorHandler } from "./middleware/errorHandler.js";
@@ -24,29 +26,9 @@ app.use(compression());
 
 // Middleware setup (correct order)
 app.use(express.json({ limit: '16kb' })); //Parse JSON body correctly
+app.use(cookieParser('yourSecretKey'));
 app.use(express.urlencoded({ extended: true }));
 
-
-// app.use('/uploads', express.static(path.join(__dirname, '../public/uploads'), {
-//   setHeaders: (res, filePath) => {
-//     if (filePath.match(/\.(jpg|jpeg|png|gif|webp|svg)$/)) {
-//       res.setHeader("Cache-Control", "public, max-age=31536000");
-//     }
-//     const origin = res.req.headers.origin;
-//     const allowedOrigins = [
-//       'https://bhoi.joodi.in',
-//       'https://bmat.onrender.com',
-//       'http://localhost:5173',
-//       'http://localhost:5174'
-//     ];
-//     // @ts-ignore
-//     if (allowedOrigins.includes(origin)) {
-//       // @ts-ignore
-//       res.setHeader('Access-Control-Allow-Origin', origin);
-//     }
-//     res.setHeader('Access-Control-Allow-Credentials', 'false');
-//   }
-// }));
 
 app.use(
   '/uploads',
@@ -75,36 +57,12 @@ app.use(
   })
 );
 
-
-
-// app.use(
-//   '/uploads',
-//   express.static(path.join(__dirname, '../public/uploads'), {
-//     setHeaders: (res, filePath) => {
-//       if (filePath.match(/\.(jpg|jpeg|png|gif|webp|svg)$/)) {
-//         res.setHeader("Cache-Control", "public, max-age=31536000"); // cache images 1 year
-//       }
-//       res.setHeader('Access-Control-Allow-Origin', 'https://bhoi.joodi.in');
-//       res.setHeader('Access-Control-Allow-Credentials', 'false'); // For anonymous
-//     },
-//   })
-// );
-
-app.use(cookieParser('yourSecretKey'));
 app.use(cors({
-  origin: ['https://bmat.onrender.com', 'https://bhoi.joodi.in', 'http://localhost:5173','http://localhost:5174', 'https://5173-mayurlotanbhoi-fbmat-uaiurd3o9t9.ws-us120.gitpod.io'],
+  origin: ['https://bmat.onrender.com', 'https://bhoi.joodi.in', 'http://localhost:5173', 'http://localhost:5174', 'https://5173-mayurlotanbhoi-fbmat-uaiurd3o9t9.ws-us120.gitpod.io'],
   credentials: true,
   optionsSuccessStatus: 200
 }));
 app.use(morgan(':method :url :status :res[content-length] - :response-time ms'));
-
-
-
-// Security: set safe HTTP headers
-
-// Serve static files from /public
-// app.use('public', express.static(path.join(__dirname, '../uploads')));
-
 
 const serviceAccount = {
   type: "service_account",
@@ -119,8 +77,6 @@ const serviceAccount = {
   client_x509_cert_url: process.env.FIREBASE_CLIENT_X509_CERT_URL,
 };
 
-console.log("Firebase service account initialized", serviceAccount);
-
 admin.initializeApp({
   credential: admin.credential.cert(serviceAccount as admin.ServiceAccount),
 });
@@ -134,7 +90,6 @@ process.on('unhandledRejection', (reason, promise) => {
 import { router as authRoutes } from './routes/auth.routes.js';
 import notificationRoutes from './routes/notifications.js';
 import matrimony from "./routes/matrimony.routes.js";
-import cookieParser from "cookie-parser";
 import user from "./routes/user.routes.js";
 import biodata from "./routes/biodata.routes.js";
 import locatation from "./routes/location.routes.js";
@@ -165,8 +120,11 @@ app.get('/health', async (req, res) => {
   res.status(200).json({ success: true, message: 'Route is healthy' });
 })
 
+
+
 app.get('/', async (req, res) => {
   res.status(404).json({ success: false, message: 'Route not found' });
 })
+
 
 export default app;

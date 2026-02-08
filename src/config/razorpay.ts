@@ -3,7 +3,7 @@ import dotenv from "dotenv";
 
 dotenv.config();
 
-const { RAZORPAY_KEY_ID, RAZORPAY_KEY_SECRET } = process.env;
+const { RAZORPAY_KEY_ID, RAZORPAY_KEY_SECRET } = process.env || {};
 console.log("Razorpay API keys:", RAZORPAY_KEY_ID, RAZORPAY_KEY_SECRET);
 
 if (!RAZORPAY_KEY_ID || !RAZORPAY_KEY_SECRET) {

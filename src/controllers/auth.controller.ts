@@ -203,6 +203,8 @@ const login = async (req: Request, res: Response) => {
     throw new ApiError(404, 'User not found');
   }
 
+  console.log(user, 'user found for login');
+
 
   // Ensure that you have a validatePassword method in UserModel
   const passwordIsValid = await UserModel.validatePassword(user.password, password);
@@ -231,7 +233,7 @@ const login = async (req: Request, res: Response) => {
   res.cookie(process.env.COOKIE_NAME!, accessToken, {
     httpOnly: true,
     secure: process.env.NODE_ENV === 'production',
-    sameSite: 'lax', 
+    sameSite: 'lax',
     maxAge: Number(process.env.COOKIE_MAX_AGE),
     path: process.env.COOKIE_PATH!,
   });
