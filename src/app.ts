@@ -32,7 +32,7 @@ app.use(express.urlencoded({ extended: true }));
 
 // app.use(
 //   '/uploads',
-//   express.static(path.join(__dirname, '../uploads'), {
+//   express.static(path.join(__dirname, '../public/uploads'), {
 //     setHeaders: (res, filePath) => {
 //       if (filePath.match(/\.(jpg|jpeg|png|gif|webp|svg)$/)) {
 //         res.setHeader("Cache-Control", "public, max-age=31536000");
@@ -60,30 +60,9 @@ app.use(express.urlencoded({ extended: true }));
 
 app.use(
   "/uploads",
-  express.static(path.join(process.cwd(), "uploads"), {
-    setHeaders: (res, filePath) => {
-      if (filePath.match(/\.(jpg|jpeg|png|gif|webp|svg)$/)) {
-        res.setHeader("Cache-Control", "public, max-age=31536000");
-        res.setHeader(
-          "Content-Disposition",
-          'inline; filename="' + path.basename(filePath) + '"'
-        );
-      }
-
-      const origin = res.req.headers.origin;
-      const allowedOrigins = [
-        "https://bhoi.joodi.in",
-        "https://bmat.onrender.com",
-        "http://localhost:5173",
-        "http://localhost:5174",
-      ];
-
-      if (origin && allowedOrigins.includes(origin)) {
-        res.setHeader("Access-Control-Allow-Origin", origin);
-      }
-    },
-  })
+  express.static(path.join(process.cwd(), "public/uploads"))
 );
+
 app.use(cors({
   origin: ['https://bmat.onrender.com', 'https://bhoi.joodi.in', 'http://localhost:5173', 'http://localhost:5174', 'https://5173-mayurlotanbhoi-fbmat-uaiurd3o9t9.ws-us120.gitpod.io'],
   credentials: true,
@@ -146,8 +125,6 @@ app.use(errorHandler);
 app.get('/health', async (req, res) => {
   res.status(200).json({ success: true, message: 'Route is healthy' });
 })
-
-
 
 app.get('/', async (req, res) => {
   res.status(404).json({ success: false, message: 'Route not found' });
