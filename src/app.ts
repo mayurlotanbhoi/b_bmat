@@ -32,7 +32,7 @@ app.use(express.urlencoded({ extended: true }));
 
 app.use(
   '/uploads',
-  express.static(path.join(__dirname, '../public/uploads'), {
+  express.static(path.join(__dirname, '../uploads'), {
     setHeaders: (res, filePath) => {
       if (filePath.match(/\.(jpg|jpeg|png|gif|webp|svg)$/)) {
         res.setHeader("Cache-Control", "public, max-age=31536000");
