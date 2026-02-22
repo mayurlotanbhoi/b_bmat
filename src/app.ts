@@ -30,33 +30,42 @@ app.use(cookieParser('yourSecretKey'));
 app.use(express.urlencoded({ extended: true }));
 
 
-app.use(
-  '/uploads',
-  express.static(path.join(__dirname, '../public/uploads'), {
-    setHeaders: (res, filePath) => {
-      if (filePath.match(/\.(jpg|jpeg|png|gif|webp|svg)$/)) {
-        res.setHeader("Cache-Control", "public, max-age=31536000");
-        res.setHeader('Content-Disposition', 'attachment; filename="' + path.basename(filePath) + '"');
-      }
+// app.use(
+//   '/uploads',
+//   express.static(path.join(__dirname, '../public/uploads'), {
+//     setHeaders: (res, filePath) => {
+//       if (filePath.match(/\.(jpg|jpeg|png|gif|webp|svg)$/)) {
+//         res.setHeader("Cache-Control", "public, max-age=31536000");
+//         res.setHeader('Content-Disposition', 'attachment; filename="' + path.basename(filePath) + '"');
+//       }
 
-      const origin = res.req.headers.origin;
-      const allowedOrigins = [
-        'https://bhoi.joodi.in',
-        'https://bmat.onrender.com',
-        'http://localhost:5173',
-        'http://localhost:5174'
-      ];
-      // @ts-ignore
-      if (allowedOrigins.includes(origin)) {
-        // @ts-ignore
-        res.setHeader('Access-Control-Allow-Origin', origin);
-      }
-      // Optionally remove this unless needed
-      // res.setHeader('Access-Control-Allow-Credentials', 'false');
+//       const origin = res.req.headers.origin;
+//       const allowedOrigins = [
+//         'https://bhoi.joodi.in',
+//         'https://bmat.onrender.com',
+//         'http://localhost:5173',
+//         'http://localhost:5174'
+//       ];
+//       // @ts-ignore
+//       if (allowedOrigins.includes(origin)) {
+//         // @ts-ignore
+//         res.setHeader('Access-Control-Allow-Origin', origin);
+//       }
+//     },
+//   })
+// );
+
+
+app.use(
+  "/uploads",
+  express.static(path.join(__dirname, "../public/uploads"), {
+    setHeaders: (res) => {
+      res.setHeader("Access-Control-Allow-Origin", "*");
+      res.setHeader("Access-Control-Allow-Methods", "GET");
+      res.setHeader("Access-Control-Allow-Headers", "*");
     },
   })
 );
-
 app.use(cors({
   origin: ['https://bmat.onrender.com', 'https://bhoi.joodi.in', 'http://localhost:5173', 'http://localhost:5174', 'https://5173-mayurlotanbhoi-fbmat-uaiurd3o9t9.ws-us120.gitpod.io'],
   credentials: true,
