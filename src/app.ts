@@ -67,7 +67,7 @@ app.use(
   })
 );
 app.use(cors({
-  origin: ['https://bmat.onrender.com', 'https://bhoi.joodi.in', 'http://localhost:5173', 'http://localhost:5174', 'https://5173-mayurlotanbhoi-fbmat-uaiurd3o9t9.ws-us120.gitpod.io'],
+  origin: ['https://master.d1eeod4cq6ddmu.amplifyapp.com', 'https://bhoi.joodi.in', 'http://localhost:5173', 'http://localhost:5174', 'https://5173-mayurlotanbhoi-fbmat-uaiurd3o9t9.ws-us120.gitpod.io'],
   credentials: true,
   optionsSuccessStatus: 200
 }));
