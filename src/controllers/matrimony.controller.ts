@@ -174,11 +174,11 @@ export const getProfileByUserId = asyncHandler(async (req: CustomRequest, res: R
         .json(new ApiResponse(200, profile, 'Profile'));
 });
 
-// ✅ Update Profile
+// Update Profile
 export const updateProfile = asyncHandler(async (req: CustomRequest, res: Response) => {
-    console.log("Raw incoming data:", req.body);
 
-    
+
+
 
     // Parse nested fields from dot-notation
     const profile = parseDotNotation(req.body);
@@ -193,7 +193,7 @@ export const updateProfile = asyncHandler(async (req: CustomRequest, res: Respon
     }
 
 
-    // ✅ Safely update profilePhotos using imageIndexes
+    // Safely update profilePhotos using imageIndexes
     if ((Array.isArray(profile?.imageIndexes) || profile?.imageIndexes === '0') || Array.isArray(req.body.compressedImages)) {
         // Ensure profilePhotos is initialized
         if (!Array.isArray(profile?.profilePhotos)) {
@@ -210,19 +210,19 @@ export const updateProfile = asyncHandler(async (req: CustomRequest, res: Respon
         }
     }
 
-    // ✅ Handle verification image
+    //  Handle verification image
     if (req.body?.compressedVerificationImage?.fileName) {
         profile.verificationImage = req.body?.compressedVerificationImage?.fileName;
     }
 
-    // ✅ Attach userId
+    //  Attach userId
     profile.userId = _id;
 
 
-    // ✅ Validate updated fields only
+    //  Validate updated fields only
     await validatePartialProfile(profile);
 
-    // ✅ Clean up fields that should not be updated
+    //  Clean up fields that should not be updated
     delete profile?.imageIndexes;
     delete profile?.compressedImages;
     delete profile?.compressedVerificationImage;
@@ -250,7 +250,7 @@ export const updateProfile = asyncHandler(async (req: CustomRequest, res: Respon
             country: profile?.contactDetails?.permanentAddress?.country ?? existingProfile.contactDetails?.permanentAddress?.country ?? "India",
         },
     };
-    // ✅ Perform partial update
+    //  Perform partial update
     const updatedProfile = await matrimonyProfileModel.findByIdAndUpdate(
         id,
         {
@@ -294,7 +294,7 @@ export const getAllProfiles = asyncHandler(async (req: CustomRequest, res: Respo
         ...filters
     } = req.body;
 
-    const { longitude  , latitude } = req.loginUser?.coordinates || {};
+    const { longitude, latitude } = req.loginUser?.coordinates || {};
 
     const currentPage = Number(page);
     const perPage = Number(limit);
@@ -378,7 +378,7 @@ export const getAllProfiles = asyncHandler(async (req: CustomRequest, res: Respo
             filter.$expr = {
                 $and: [
                     { $regexMatch: { input: "$professionalDetails.income", regex: "^[0-9]+(\\.[0-9]+)?$" } },
-                    { $gte: [ { $toDouble: "$professionalDetails.income" }, Number(value) ] }
+                    { $gte: [{ $toDouble: "$professionalDetails.income" }, Number(value)] }
                 ]
             };
         } else if (fieldMap[key]) {
