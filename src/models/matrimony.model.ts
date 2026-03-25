@@ -138,7 +138,7 @@ const profileSchema = new Schema<IProfile>({
     profileStatus: {
         type: String,
         enum: ['Active', 'Inactive', 'Pending', 'Suspended'],
-        default: 'Pending'
+        default: 'Active'
     },
     lat: { type: Number },
     lon: { type: Number },
